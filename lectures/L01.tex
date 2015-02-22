@@ -12,13 +12,20 @@ We'll start by reviewing the highlights of the class syllabus. Please read it ca
 
 \begin{quote}
 \textit{Operating systems are those programs that interface the machine with the applications programs. The main function of these systems is to dynamically allocate the shared system resources to the executing programs.}
-\textit{But the interface with adjacent levels continues to shift withtime. Functions that were originally part of the operating system have migrated to the hardware. On the other side, programmed functions extraneous to the problems being solved by the application programs are included in the operating system.
+
+\textit{But the interface with adjacent levels continues to shift with
+time. Functions that were originally part of the operating system have migrated to the hardware. On the other side, programmed functions extraneous to the problems being solved by the application programs are included in the operating system.
 }
 \end{quote}
 
 \hfill - What Can Be Automated?: The Computer Science and Engineering Research Study, MIT Press, 1980
 
 An operating system (often abbreviated OS) is a piece of software that sits between the hardware of a computer and the applications (programs) that run on that computer. The OS does many different things and often has many (occasionally-conflicting) goals. To use an analogy, you may wish to think of the operating system as the ``government'' of the computer: it is responsible for creating and enforcing the rules, providing an environment for other programs, and collecting and reporting data about what is and has been happening.
+
+\begin{center}
+\includegraphics[width=0.75\textwidth]{images/os-sw-hw.png}\\
+Structural diagram of a modern computer~\cite{osi}
+\end{center}
 
 An operating system is also responsible for resource allocation. In the real world, the resources we have to work with, such as CPU time or memory space, are limited. The OS decides how to allocate these resources, keeps track of who currently owns what, and, in the event of conflicting requests, determines who gets the resource.
 
@@ -61,7 +68,7 @@ At this point, there is an operating system, of a sorts: it is the operator who 
 These systems were still operating on the batch principle, done in such a way as to keep the CPU busy. In many older mainframes running things like military computations, the CPU was busy most of the time and was the limiting factor. In commercial applications, input/output (I/O) was often the limiting factor. Thus, it was ideal to have several jobs ready to go so the CPU's time would not be wasted. There was, however, a catch. Programmers submitted the job but it could take a long time to get back results. If the programmer made a mistake and got a compilation error, they might not find out until the next day. 
 
 \begin{center}
-\includegraphics[width=0.25\textwidth]{images/compiling.png}\\
+\includegraphics[width=0.45\textwidth]{images/compiling.png}\\
 ``My code's compiling.'' ~\cite{xkcd:compiling}
 \end{center}
 

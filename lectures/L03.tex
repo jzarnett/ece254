@@ -2,8 +2,71 @@
 
 \begin{document}
 
-\lecture{ 3 --- Traps and OS Services}{\term}{Jeff Zarnett}
+\lecture{ 3 --- Operating System Structure and Traps}{\term}{Jeff Zarnett}
 
+\section*{Operating System Structure}
+
+An operating system is large and complex and this is not the sort of thing programmers create at a whim with no planning. It is possible to write an OS without a defined structure, but just like writing any large program, it will quickly become unmaintainable and will very likely be bug-riddled. Consider the traditional UNIX structure:
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{images/unix-structure.png}\\
+The traditional UNIX structure\cite{osc}.
+\end{center}
+
+There are some clearly defined areas here and interfaces between the kernel and hardware and between the user space and the kernel. Let us generalize this concept to a ``layered'' operating system: 
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{images/layered-os.png}\\
+A layered operating system~\cite{osc}.
+\end{center}
+
+All the modern desktop/laptop/mobile operating systems tend to follow this structure, with some modifications (the lines are not always so cleanly drawn). There is one further structural element that OSes have, within a layer: modules.
+
+Just as we have classes and packages in a regular program to contain related functionality, an operating system's layers will have its functionality grouped into modules by what they do. We may have a module for a device driver, for scheduling, and for a file system.
+
+Modules might be static, but more often they are loadable and swappable. So at run-time, or perhaps a reboot, we can replace a module with another version or add a new module. When connecting a new device to the system, if the device driver for it is not already loaded into the kernel, it can be done dynamically. As another example, we might choose to change scheduling from high responsiveness to high CPU usage, and this will require a reboot but not recompiling and reinstalling the kernel. The diagram below shows the loadable modules of Sun Microsystems' Solaris operating system:
+
+\begin{center}
+\includegraphics[width=0.65\textwidth]{images/solaris-structure.png}\\
+Solaris loadable modules~\cite{osc}.
+\end{center}
+
+Combining the layered and modular approaches presents us with: the layered operating system with modules (not a very exciting name, I realize).
+
+\subsection*{The Layered Operating System with Modules}
+
+The operating system provides the environment for the execution of programs and supports them in their execution by providing various services. Some of the services are there for the convenience of the user programs; others are mandatory (e.g., to request memory, the user program MUST request it and can't simply take it). Consider the diagram below, which identifies some common categories of OS services and their relation to one another.
+
+\begin{center}
+\includegraphics[width=0.75\textwidth]{images/os-structure.png}\\
+A view of operating system services~\cite{osc}.
+\end{center}
+
+Let us take a moment to get an overview of these services, starting at the top and working our way down. Many of these services are something we will examine in detail later on.
+
+\paragraph{The User Interface.} In the diagram the user interface is a box with several constituent parts: the GUI (Graphical User Interface, i.e., windows), the batch interface (commands entered in files that run periodically), and the command line interface (CLI). This is how the user (or a program) executes a program or command and how the results of that command are returned to the user.
+
+\paragraph{System Calls.} System calls are functions or procedures the operating system makes available for use. It is the gateway into the operating system's functionality. When a user program wants to do something it cannot do itself, it makes a system call and that system call activates a portion of the OS functionality in the layer below.
+
+\paragraph{Program Execution.} This is nothing more than the ability to load a program into memory and run it, as well as terminate the program (normally or otherwise)~\cite{osc}.
+
+\paragraph{I/O Operations.} The operating system typically manages the I/O devices of the system, like printers, sensors, and actuators. We will examine shortly why the OS is the designated manager for this. When a new device is connected, like a USB key being plugged in, the OS needs to recognize it, initialize it, and make it available.
+
+\paragraph{File Systems.} Files are important parts of the system -- they are programs and data. A program will need to read and write files, and the operating system does the same (such as when loading a program into memory to execute it). The file system is somewhat like the intersection of memory and an I/O device; the operating system manages both of those, so it is obvious it should also manage the file system.
+
+\paragraph{Communication.} This may be communication between the computer and the Internet or between multiple processes in the same system. There are two basic strategies, each of which we will examine in due course: shared memory (in the same system) and message passing.
+
+\paragraph{Resource Allocation.} In a system with multiple users or multiple programs, resources like memory need to be managed appropriately. Resources are limited even if there is enough to go around: two programs can't use the same area of memory at the same time. The OS is responsible for allocation of those resources, keeping track of which programs currently own a resource, and mediating conflicting requests.
+
+\paragraph{Accounting.} It is usually desirable to keep some statistical data on what resources programs are using. This might be to ensure stability, as a way of improving usage, or just for billing. A program that is consuming too much memory or CPU may be terminated to ensure the system's stability. The data collected can be analyzed to find bottlenecks in the system that might be relieved. Or, in the case of something like a supercomputer, perhaps the operators will bill the users (typically universities and government departments) for how much of the CPU time they have used.
+
+\paragraph{Error Detection.} The OS will need to detect and handle errors. Errors might come from user programs (like a division by zero) or from I/O devices (scanner has crashed). When the OS detects an error it may result in halting the system (the famous ``Blue Screen of Death'') or killing the offending program (``Would you like to report the problem to Microsoft?'')
+
+\paragraph{Protection and Security.} The security side of this includes authentication (logging in to the system) and enforcing access rights on elements of the system (user vs. administrator accounts or who can read a file). Protection is about making sure all users and programs get along (as best they can): that one program doesn't interfere with the execution of another.
+
+
+\paragraph{Invoking System Calls}
+Some of the operating system services, like the accounting routines, run automatically and user programs do not interact with them. The rest, however, a user program may wish to interact with them. How do we do so?
 
 \section*{It's a Trap!}
 Operating systems run, as previously discussed, on interrupts. In addition to the interrupts that will be generated by hardware and devices (e.g., a keyboard signalling that the F1 key has been pressed), there are also interrupts generated in software. These are often referred to as a \textit{trap} (or, sometimes, an exception). The trap is usually generated either by an error like an invalid instruction or from a user program request. 
@@ -65,7 +128,7 @@ To summarize, the steps, arranged chronologically, when invoking a system call a
 \end{enumerate}
 
 
-\section*{Operating System Structures}
+
 
 
 
