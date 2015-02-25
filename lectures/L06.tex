@@ -1,0 +1,180 @@
+\input{header.tex}
+
+\begin{document}
+
+\lecture{ 6 --- Processes in UNIX}{\term}{Jeff Zarnett}
+
+\section*{The Process in UNIX}
+
+Earlier on, we saw that in UNIX, a process may create other processes. The creating process is the parent and the newly-created processes are its children. Every process has a parent, stretching back to the \texttt{init} process at the root of the tree.
+
+Each process has a unique identifier in its process control block, and in UNIX we call this the \texttt{pid} (process ID). For the most part, users will not need to know or think about the ID of a process when trying to terminate one that's gotten stuck (\texttt{kill -9 24601}). The \texttt{init} process always gets a pid of 1. I don't recommend trying to kill \texttt{init}. In most cases, \texttt{init} will just laugh off your attempt (``'tis but a scratch!'') but you might end up rebooting the system or causing a crash.
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{images/linux-process-tree.png}\\
+A tree of processes in a Linux system~\cite{osc} \footnote{...one of whose authors apparently uses \texttt{emacs} instead of \texttt{vi}. Shame on him.}.
+\end{center}
+
+In a UNIX system, we can obtain a list of processes at any time with the \texttt{ps} command.
+
+\subsection*{Spawning Child Processes}
+
+In general, when a process spawns a child, the child will need resources (memory, files etc.). The child may request them from the OS directly or the parent can give some of its resources to the child. The parent may partition resources amongst the children or allow its children to share them instead. Restricting a child process to only being able to use some subset of its parent's resources means that a process cannot overload the system by spawning too many children~\cite{osc}.
+
+At the time of initialization, the parent may pass the child some data. When the user clicks on a link in an e-mail\footnote{Remember when I said don't do this? I meant it.} and the e-mail client spawns the web browser, the browser doesn't just open a blank page or the user's normal home page; instead it starts up with the address the user just clicked on.
+
+When a new process is created, the child process may be a duplicate of the parent process, or it may have a new program loaded into it.
+
+
+\subsection*{Show Me The Code!}
+
+The workflow in UNIX is as follows. First, the parent spawns the child process with the \texttt{fork} system call. If it is interested in waiting for the child process to finish, it will use the system call \texttt{wait}, in which case the parent will be awaiting the completion of the child process. When the child process is finished, it returns a value with the \texttt{exit} system call. The parent process will then get this as the return value of the \texttt{wait} call and may proceed.
+
+What does \texttt{fork} do? It creates a new process; it makes a copy of itself. The parent and child continue execution after the \texttt{fork} statement. If \texttt{fork} returns a negative number, the \texttt{fork} system call failed. If it returns 0, the process that got the 0 back is the child. If it returns a positive value, that is the process ID of the child.
+
+After the \texttt{fork}, one of the processes may use the \texttt{exec} system call, or one of its variants, to replace its memory space with a new program. There's no rule that says this must happen; a child can continue to be a clone of its parent if it wishes. The \texttt{exec} invocation loads the binary file into memory and starts execution~\cite{osc}. At this point, the programs can go their separate ways, or the parent might want to wait for the child to finish. The parent is then blocked, waiting for the child process to execute.
+
+Let's put this all together in an actual C-code example adapted from~\cite{osc}:
+
+\begin{verbatim}
+#include <sys/types.h>
+#include <stdio.h> 
+#include <unistd.h>
+
+int main()
+{
+  pid_t pid;
+  int childStatus;
+
+  /* fork a child process */
+  pid = fork();
+  
+  if (pid < 0) { 
+  
+    /* error occurred */ 
+    fprintf(stderr, "Fork Failed"); 
+    return 1;
+    
+ } else if (pid == 0) { 
+    
+    /* child process */
+    execlp("/bin/ls","ls",NULL);
+    
+  } else { 
+    
+    /* parent process */
+    /* parent will wait for the child to complete */
+    wait(&childStatus);
+    printf("Child Complete with status: %i \n", childStatus);
+    
+  }
+    
+  return 0;
+}
+\end{verbatim}
+
+When executed, this code starts up and attempts to spawn a child process. Let us assume that the \texttt{fork} command succeeds and we do not enter the error-occurred block.  After the fork there are now two processes at the statement \texttt{ if ( pid < 0 ) } . The child process calls \texttt{execlp}, replacing itself with the \texttt{ls} (list directory contents) command. The parent process will go to the \texttt{wait} statement and wait for the child process to complete. The child process runs \texttt{ls}, listing the contents of the directory. Then it finishes. The parent process, finally, prints ``Child Complete'' to the console.
+
+Thus, the output is:
+\begin{verbatim}
+jz@Freyja:~/fork$ ./fork 
+fork   fork.c
+Child Complete with status: 0
+jz@Freyja:~/fork$ 
+\end{verbatim}
+
+Or, to represent this visually:
+
+\begin{center}
+\includegraphics[width=0.85\textwidth]{images/fork-syscall.png}\\
+Process creation with the \texttt{fork} system call~\cite{osc}.
+\end{center}
+
+What about termination? On the assumption that the process is terminating normally and not being killed, the system call for that is \texttt{exit}. Let us modify that code above to fork off a child process that will exit ``abnormally'' with an exit code of 1. The \texttt{wait} function also returns the process ID of the child so that the parent can identify which of its children has terminated, though it is not used in this example.
+
+
+\begin{verbatim}
+#include <sys/types.h>
+#include <stdio.h> 
+#include <unistd.h>
+
+int main()
+{
+  pid_t pid;
+  int childStatus;
+
+  /* fork a child process */
+  pid = fork();
+  
+  if (pid < 0) { 
+  
+    /* error occurred */ 
+    fprintf(stderr, "Fork Failed"); 
+    return 1;
+    
+ } else if (pid == 0) { 
+    
+    /* child process */
+    exit( 1 );
+    
+  } else { 
+    
+    /* parent process */
+    /* parent will wait for the child to complete */
+    wait(&childStatus);
+    printf("Child Complete with status: %i \n", childStatus);
+    
+  }
+    
+  return 0;
+}
+\end{verbatim}
+
+\section*{UNIX System V Process Management}
+
+UNIX divides its processes into two categories: system processes that run in kernel mode and user processes that run in user mode. There are nine different states a process can be in~\cite{osi}.
+
+\begin{enumerate}
+	\item \textbf{User Running:} Executing in user mode.
+	\item \textbf{Kernel Running:} Executing in kernel mode.
+	\item \textbf{Ready to Run, in Memory:} Ready to run; in memory.
+	\item \textbf{Asleep in Memory:} Blocked; in memory.
+	\item \textbf{Ready to Run, Swapped:} Ready to run; not in memory.
+	\item \textbf{Sleeping, Swapped:} Blocked; not in memory.
+	\item \textbf{Preempted:} Process is returning from kernel to user mode, but the kernel decides to run another process at this time.
+	\item \textbf{Created:} Newly created and not yet ready to run.
+	\item \textbf{Zombie:} Process is done, but the parent has not yet collected the return information.
+\end{enumerate}
+
+
+\begin{center}
+\includegraphics[width=0.75\textwidth]{images/unix-states.png}\\
+UNIX process state transition diagram~\cite{osi}.
+\end{center}
+
+This is much like our general seven-state model we saw earlier. There are two major differences: (1) the running in user mode vs. running in kernel mode distinction; and (2) the preempted state. This preempted state is just like ready to run in memory, but the distinction is really just how the process got to be in that state. When a process is running in kernel mode as a result of a system call, for example, when control is about to go back to the user program, this is as good a time as any to swap to another process. So that would put the process in the preempted state rather than ready to run, in memory. But these two states are really the same, logically~\cite{osi}. 
+
+\subsection*{Process Creation}
+Process creation, as already discussed, takes place when \texttt{fork} is called. When that happens, the OS takes the following steps~\cite{bach86}:
+
+\begin{enumerate}
+	\item It allocates a slot in the process table for the new process.
+	\item It assigns a unique process ID to the child process.
+	\item It makes a copy of the process image of the parent, with the exception of any shared memory.
+	\item It increments counters for any files owned by the parent (showing there is an additional process referencing those files).
+	\item The new process is in the state Ready to Run.
+	\item A return value of 0 goes to the child process, and the unique process ID of the child is returned to the parent.
+\end{enumerate}
+
+All of the above takes place in kernel mode in the parent process. When it is all done, the system will need to choose which process is going to run: 
+
+\begin{enumerate}
+	\item The parent process. The child is in the ready to run state.
+	\item The child process. The parent is in the ready to run state.
+	\item Another process. Both parent and child are in the ready to run state.
+\end{enumerate}
+
+
+\input{bibliography.tex}
+
+\end{document}
