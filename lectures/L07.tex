@@ -81,7 +81,7 @@ What we would like is \textit{indirect communication} where the messages are sen
 
 A mailbox may belong specifically to one process or may be set up by the operating system. If the mailbox belongs to the process, then anyone can send to this mailbox, but only the owning process may receive messages from that mailbox. If the owner process has not started or has terminated, attempting to send to that mailbox will be an error for the sender.
 
-If the mailbox is owned by the operating system, it is persistent and independent of any particular process. When we used direct communication, e.g., sending to process $A$, the communication relationship is 1:1 - one sender and one receiver. When there was a mailbox owned by $A$, we could be certain that only process $A$ could retrieve items from that mailbox. There is no conceptual reason, however, preventing an operating system mailbox from belonging to more than one process. If mailbox $M$ belongs to the operating system and processed $P_{1}$ and $P_{2}$ have access to it, which process will receive a message sent to that mailbox?
+If the mailbox is owned by the operating system, it is persistent and independent of any particular process. When we used direct communication, e.g., sending to process $A$, the communication relationship is 1:1 - one sender and one receiver. When there was a mailbox owned by $A$, we could be certain that only process $A$ could retrieve items from that mailbox. There is no conceptual reason, however, preventing an operating system mailbox from belonging to more than one process. If mailbox $M$ belongs to the operating system and processes $P_{1}$ and $P_{2}$ have access to it, which process will receive a message sent to that mailbox?
 
 There are two ways we can deal with this problem. The first is that the OS should allow only one process at a time to pick up items from the mailbox, thus preventing the problem altogether. The other solution is that the OS may have some scheme: whichever process gets there first, alternation (taking turns), or any other system of deciding whose turn it is.
 
@@ -129,19 +129,34 @@ Let's consider an example from~\cite{osc} that combines the pipe concept with wh
 #include <stdio.h> 
 #include <string.h> 
 #include <unistd.h>
-#define BUFFER SIZE 25
+
+#define BUFFER SIZE 25
 #define READ END 0 
 #define WRITE END 1
 
-int main(void){  char write msg[BUFFER SIZE] = "Greetings"; 
-  char read msg[BUFFER SIZE];  int fd[2];  pid t pid;
+int main(void)
+{
+  char write msg[BUFFER SIZE] = "Greetings"; 
+  char read msg[BUFFER SIZE];
+  int fd[2];
+  pid t pid;
 
-  if (pipe(fd) == -1) {    fprintf(stderr,"Pipe failed");    return 1;  }  
-  /* fork a child process */  pid = fork();  
+  if (pipe(fd) == -1) {
+    fprintf(stderr,"Pipe failed");
+    return 1;
+  }
+  
+  /* fork a child process */
+  pid = fork();
+  
   if (pid < 0) { 
     /* error occurred */ 
     fprintf(stderr, "Fork Failed"); 
-    return 1;  }  if (pid > 0) { /* parent process */    /* close the unused end of the pipe */ 
+    return 1;
+  }
+
+  if (pid > 0) { /* parent process */
+    /* close the unused end of the pipe */ 
     close(fd[READ END]);
     
     /* write to the pipe */
@@ -150,13 +165,17 @@ int main(void){  char write msg[BUFFER SIZE] = "Greetings";
     /* close the write end of the pipe */
     close(fd[WRITE END]);
     
-  } else { /* child process */    /* close the unused end of the pipe */ 
+  } else { /* child process */
+    /* close the unused end of the pipe */ 
     close(fd[WRITE END]);
     
     /* read from the pipe */
     read(fd[READ END], read msg, BUFFER SIZE); printf("read %s",read msg);
      /* close the write end of the pipe */
-     close(fd[READ END]);  }  return 0;}
+     close(fd[READ END]);
+  }
+  return 0;
+}
 \end{verbatim}
 
 If we wanted to create a named pipe, the system call for that is \texttt{mkfifo} (make first-in-first-out) because sometimes a named pipe is called a FIFO. As it is a file, it can be manipulated with the usual UNIX file system calls: \texttt{open}, \texttt{read}, \texttt{write}, and \texttt{close}~\cite{osc}.

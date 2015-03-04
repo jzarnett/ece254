@@ -72,7 +72,7 @@ void *void_ret;
 
 pthread_join( thread_id, &void_ret );
 
-return_t *returnValue = (return_t *) void_void_argret;
+return_t *returnValue = (return_t *) void_ret;
 \end{verbatim}
 
 If a thread has no return values, it can just \texttt{return NULL;} which will have the same effect as \texttt{pthread\_exit} and send \texttt{NULL} back to the thread that has joined it. If the function that is called as a task returns normally rather than calling the exit routine, the thread will still be terminated. 

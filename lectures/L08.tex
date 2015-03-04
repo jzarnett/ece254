@@ -54,7 +54,7 @@ Why choose threads rather than creating a new process? The primary, but not sole
 	\item As in the file transfer program, use of threads allows the program to be responsive even when a part of the program is blocked.
 \end{enumerate}
 
-This last advantages, background work, is one of four common examples of the uses of threads in a general purpose operating system~\cite{insideOS2}:
+This last advantage, background work, is one of four common examples of the uses of threads in a general purpose operating system~\cite{insideOS2}:
 \begin{enumerate}
 	\item \textbf{Foreground and Background Work:} as already examined, the ability to run something in the background to keep the program responsive.
 	\item \textbf{Asynchronous processing}: for example, to protect against power failure or a crash, a word processor may write the document data in main memory to disk periodically. This can be done as a background task so it does not disrupt the user's workflow.
