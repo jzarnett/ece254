@@ -84,6 +84,39 @@ A thought: can we do this with serialization? That is, can we make sure that the
 
 With mutual exclusion, we do not know or enforce any particular order of events, but what we do care about is that we do not have multiple threads trying to update the variable at the same time. It would mean that the action to reset \texttt{count} to zero would have to wait until the \texttt{count++} operation was completely finished (or vice versa) before it gets to execute. 
 
+\subsection*{Mutual Exclusion through Flags}
+So we have identified some shared data that we want only one thread to be able to access at a time. A section of code that should be accessed by only one thread at a time is referred to as a \textit{critical section}. The purpose of mutual exclusion is to ensure that only one thread is in the critical section at one time. If we ever have more than one thread in the critical section at a time, something has gone terribly wrong.
+
+It is the responsibility of the programmer to identify what critical sections, if any, exist in the program, and to protect them with mutexes. Some analysis tools may exist to identify shared data, but ultimately the best analysis tool is taking a careful look. 
+
+Critical sections should be as short as possible (but enclose all shared data accesses).
+
+Our first approach then, is to have a variable to indicate if the critical section is currently in use. Suppose we have two threads:
+
+\begin{multicols}{2}
+\textbf{Thread A}
+	\begin{verbatim}
+	A1. while ( turn != 0 ) {
+	A2.    /* Wait for my turn */
+	A3. }
+	A4. /* critical section */
+	A5. turn = 1;
+	\end{verbatim}
+\columnbreak
+\textbf{Thread B}
+	\begin{verbatim}
+	B1. while ( turn != 1 ) {
+	B2.   /* Wait for my turn */
+	B3. }
+	B4. /* critical section */
+	B5. turn = 0;
+	\end{verbatim}
+\end{multicols}
+
+This scheme enforces strict alternation: first it is the turn of thread $A$, then the turn of thread $B$, then back to 1, and so on. What if thread $A$ is to run more often than $B$? If thread $B$ terminates then thread $A$ will be stuck forever because the variable \texttt{turn} will always be saying that it is thread $B$'s turn. This solution is obviously not satisfactory. 
+
+The other problem with flags is that when we have a statement like \texttt{if (busy == 0)} followed by \texttt{busy = 1;} these are two steps here: read of \texttt{busy} and write of \texttt{busy} and an interrupt can come in between the read and the write (the worst possible time, from our perspective). This presents a possible solution: disabling interrupts. If interrupts are disabled, then interrupts generated from the user as well as the normal thread switches the scheduler would perform will not occur.
+
 \subsection*{Mutual Exclusion through Messages}
 
 We can also solve the problem of mutual exclusion via messages. Suppose there is a third employee at the power plant, Charlie, who works on the day shift at the same time as Alice. Safety rules say that at least one of them has to monitor the safety of the reactor at all times and therefore they cannot both take lunch at the same time. If we cannot predict when lunch begins or how long it will last, how can Alice and Charlie co-ordinate to make sure they don't take lunch at the same time?
