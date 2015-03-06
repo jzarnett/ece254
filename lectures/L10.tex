@@ -97,11 +97,24 @@ Recall from data structures and algorithms the concept of merge sort. This is a 
 In your earlier examination of sorting, you may have learned that for a small array, perhaps of 30 entries or fewer, it makes sense to use one of the simple algorithms like insertion sort (despite $\Theta(n^{2})$ worst-case runtime). Below this threshold, it is more efficient to execute the insertion sort algorithm than it would be to divide up the problem into smaller pieces and recombine those results~\cite{mte241}. You may have seen something similar in optimized binary search algorithms where, at some point, a linear search is used. So let us begin with the code for the insertion sort routine that we will rely upon. This code, and all code in this section, comes from~\cite{mte241}:
 
 \begin{verbatim}
-void insertion_sort( double *array, size_t a, size_t b ) {  size_t j, k;  double tmp;  for ( int k = a + 1; k < b; ++k ) { 
-    tmp = array[k];    
-    for ( int j = k; j > a; --j ) {      if ( array[j - 1] > tmp ) {        array[j] = array[j - 1];      } else {        array[j] = tmp;        break;      }    }
-    if ( tmp < array[a] ) {      array[a] = tmp;
-    }  } 
+void insertion_sort( double *array, size_t a, size_t b ) {
+  size_t j, k;
+  double tmp;
+  for ( int k = a + 1; k < b; ++k ) { 
+    tmp = array[k];
+    
+    for ( int j = k; j > a; --j ) {
+      if ( array[j - 1] > tmp ) {
+        array[j] = array[j - 1];
+      } else {
+        array[j] = tmp;
+        break;
+      }
+    }
+    if ( tmp < array[a] ) {
+      array[a] = tmp;
+    }
+  } 
 }
 \end{verbatim}
 
@@ -109,18 +122,40 @@ So our merge sort algorithm will look like this: if the list is below a certain 
 
 \begin{verbatim}
 #include <assert.h>
-// Merge the entries from a to b - 1 and from b to c - 1 
-void merge( double *array, size_t a, size_t b, size_t c ) {  assert( a <= b && b <= c );  
-  size_t i = 0, j = a, k = b;  double *sorted_array = (double *) malloc( (c - a)*sizeof( double ) );  
-  while ( j < b && k < c ) {    if ( array[j] <= array[k] ) {      sorted_array[i] = array[j];      ++j; 
-    } else {      sorted_array[i] = array[k];      ++k; 
-    }    
+
+// Merge the entries from a to b - 1 and from b to c - 1 
+void merge( double *array, size_t a, size_t b, size_t c ) {
+  assert( a <= b && b <= c );
+  
+  size_t i = 0, j = a, k = b;
+  double *sorted_array = (double *) malloc( (c - a)*sizeof( double ) );
+  
+  while ( j < b && k < c ) {
+    if ( array[j] <= array[k] ) {
+      sorted_array[i] = array[j];
+      ++j; 
+    } else {
+      sorted_array[i] = array[k];
+      ++k; 
+    }
+    
     ++i; 
-    }    
-  for ( ; j < b; ++i, ++j ) {    sorted_array[i] = array[j];  }    
-  for ( ; k < c; ++i, ++k ) {    sorted_array[i] = array[k];  }    
-  for ( i = 0, k = a; k < c; ++i, ++k ) {    array[k] = sorted_array[i];  }    
-  free( sorted_array );}
+    }
+    
+  for ( ; j < b; ++i, ++j ) {
+    sorted_array[i] = array[j];
+  }
+    
+  for ( ; k < c; ++i, ++k ) {
+    sorted_array[i] = array[k];
+  }
+    
+  for ( i = 0, k = a; k < c; ++i, ++k ) {
+    array[k] = sorted_array[i];
+  }
+    
+  free( sorted_array );
+}
 \end{verbatim}
 
 And now we can implement merge sort (which is presently configured such that insertion sort will be used if the array to be examined is smaller than 30 entries).
@@ -128,37 +163,76 @@ And now we can implement merge sort (which is presently configured such that ins
 \begin{verbatim}
 #define USE_INSERTION_SORT 30
 
-void merge_sort( double *array, size_t a, size_t c ) {  assert( a <= c );  
-  if ( c - a < USE_INSERTION_SORT ) {    insertion_sort( array, a, c );    return;  }  size_t b = a + (c - a)/2;  
-  merge_sort( array, a, b );  merge_sort( array, b, c );  merge( array, a, b, c );}
+void merge_sort( double *array, size_t a, size_t c ) {
+  assert( a <= c );
+  
+  if ( c - a < USE_INSERTION_SORT ) {
+    insertion_sort( array, a, c );
+    return;
+  }
+  size_t b = a + (c - a)/2;
+  
+  merge_sort( array, a, b );
+  merge_sort( array, b, c );
+  merge( array, a, b, c );
+}
 \end{verbatim}
 
 To run this as a new thread, as you will recall from earlier, we can pass in only one argument for the parameters to the sort function. So we need a \texttt{struct} object to contain the arguments:
 
 \begin{verbatim}
-typedef struct interval {  double *array;  size_t a;  size_t c;} interval_t;
+typedef struct interval {
+  double *array;
+  size_t a;
+  size_t c;
+} interval_t;
 \end{verbatim}
 
 The user does not know that we are going to use a parallel algorithm so the function call should seem somewhat more ``natural'' and delegate to our internal function: 
 
 \begin{verbatim}
-void merge_sort( double *array, size_t n ) {  interval_t arg;  arg.array = array;  arg.a = 0;  arg.c = n;  merge_sort_internal( &arg );}
+void merge_sort( double *array, size_t n ) {
+  interval_t arg;
+  arg.array = array;
+  arg.a = 0;
+  arg.c = n;
+  merge_sort_internal( &arg );
+}
 
-void *merge_sort_interal( void *void_arg ) {  // the argument is an arbitrary pointer  //   cast it to a pointer to an instance of 'interval_t'  interval_t *arg = (interval_t *)void_arg;  if ( ( arg->c Ð arg->a ) < USE_INSERTION_SORT ) {    insertion_sort( arg->array, arg->a, arg->c );    return NULL;  }  
-  size_t b = arg->a + (arg->c - arg->a)/2;  
-  interval_t arg1, arg2;  
-  arg1.array = arg->array;  arg1.a = arg->a;  arg1.c = b;  
-  arg2.array = arg->array;  arg2.a = b;  arg2.c = arg->c;  
+void *merge_sort_interal( void *void_arg ) {
+  // the argument is an arbitrary pointer
+  //   cast it to a pointer to an instance of 'interval_t'
+  interval_t *arg = (interval_t *)void_arg;
+  if ( ( arg->c - arg->a ) < USE_INSERTION_SORT ) {
+    insertion_sort( arg->array, arg->a, arg->c );
+    return NULL;
+  }
+  
+  size_t b = arg->a + (arg->c - arg->a)/2;
+  
+  interval_t arg1, arg2;
+  
+  arg1.array = arg->array;
+  arg1.a = arg->a;
+  arg1.c = b;
+  
+  arg2.array = arg->array;
+  arg2.a = b;
+  arg2.c = arg->c;
+  
   pthread_t other_thread;
 
-  // Create a thread to sort the second half  pthread_create( &other_thread, NULL, merge_sort_interal, &arg2 ); 
+  // Create a thread to sort the second half
+  pthread_create( &other_thread, NULL, merge_sort_interal, &arg2 ); 
   merge_sort_interal( &arg1 );
   
-  // Wait for them to finish  pthread_join( other_thread, NULL );
+  // Wait for them to finish
+  pthread_join( other_thread, NULL );
 
   merge( arg->array, arg->a, b, arg->c );
 
-  return NULL;}
+  return NULL;
+}
 \end{verbatim}
 
 The execution of this code on an array of capacity 21 and with the insertion sort threshold lowered to 5, when represented visually, looks like this:
