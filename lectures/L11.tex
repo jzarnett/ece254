@@ -80,12 +80,12 @@ This problem arises because the instruction \texttt{count++} is really three thi
 
 Though there are usually some atomic operations available to us in a given system, we cannot be certain that all operations are indivisible. In fact, the opposite is likely to be true: we can be certain there are some operations that are non-atomic. Therefore we need to make sure at the very least that one operation on the shared variable is finished before the next begins.
 
-A thought: can we do this with serialization? That is, can we make sure that the \texttt{count++} operation completes before the \texttt{count = 0} operation? That would eliminate the problem of the reset being ignored. Unlike the scenario where Alice waits for Bob to get to work before she leaves, in this case there is no obvious order between the events: the user may press the reset button at any time, even if no event has just occurred. Similarly, the event may be detected even if the user is nowhere around and not going to press the reset button. Our concept of serialization requires there is a correct order: first this, then that. Here, where both orders are valid, we need the other approach: mutual exclusion (also called \textit{mutex}).
+A thought: can we do this with serialization? That is, can we make sure that the \texttt{count++} operation completes before the \texttt{count = 0} operation? That would eliminate the problem of the reset being ignored. Unlike the scenario where Alice waits for Bob to get to work before she leaves, in this case there is no obvious order between the events: the user may press the reset button at any time, even if no event has just occurred. Similarly, the event may be detected even if the user is nowhere around and not going to press the reset button. Our concept of serialization requires that there exists a correct order: first this, then that. Here, where both orders are valid, we need the other approach: mutual exclusion (also called \textit{mutex}).
 
 With mutual exclusion, we do not know or enforce any particular order of events, but what we do care about is that we do not have multiple threads trying to update the variable at the same time. It would mean that the action to reset \texttt{count} to zero would have to wait until the \texttt{count++} operation was completely finished (or vice versa) before it gets to execute. 
 
 \subsection*{Mutual Exclusion through Flags}
-So we have identified some shared data that we want only one thread to be able to access at a time. A section of code that should be accessed by only one thread at a time is referred to as a \textit{critical section}. The purpose of mutual exclusion is to ensure that only one thread is in the critical section at one time. If we ever have more than one thread in the critical section at a time, something has gone terribly wrong.
+So we have identified shared data as a potential source of error. A section of code that should be accessed by a maximum of one thread at a time is referred to as a \textit{critical section}. The purpose of mutual exclusion is to ensure that at most one thread is in the critical section at a time. If we ever have more than one thread in the critical section at a time, something has gone terribly wrong. But on the other hand, the critical section is supposed to do something useful, so we cannot solve the problem by not allowing any thread to access it ever.
 
 It is the responsibility of the programmer to identify what critical sections, if any, exist in the program, and to protect them with mutexes. Some analysis tools may exist to identify shared data, but ultimately the best analysis tool is taking a careful look. Critical sections should be as short as possible (but enclose all shared data accesses). The critical section is something that cannot be run in parallel, so it increases the magnitude of the $S$ term in Amdahl's Law, limiting the speed increase we can get from multiple threads and cores. Besides, it would be impolite to make other threads and processes wait unnecessarily.
 
@@ -111,18 +111,96 @@ Our first approach then, is to have a variable to indicate if the critical secti
 	\end{verbatim}
 \end{multicols}
 
-This scheme enforces strict alternation: first it is the turn of thread $A$, then the turn of thread $B$, then back to 1, and so on. What if thread $A$ is to run more often than $B$? If thread $B$ terminates then thread $A$ will be stuck forever because the variable \texttt{turn} will always be saying that it is thread $B$'s turn. This solution is obviously not satisfactory. 
+This scheme enforces strict alternation: first it is the turn of thread $A$, then the turn of thread $B$, then back to 1, and so on. What if thread $A$ is to run more often than $B$? If thread $B$ terminates then thread $A$ will be stuck forever because the variable \texttt{turn} will always be saying that it is thread $B$'s turn. This solution is obviously not satisfactory. Another approach then:
 
-TODO: Other software ``solutions''
+\begin{multicols}{2}
+\textbf{Thread A}
+	\begin{verbatim}
+	A1. while ( busy == true ) {
+	A2.    /* Wait for my turn */
+	A3. }
+	A4. busy = true;
+	A5. /* critical section */
+	A6. busy = false;
+	\end{verbatim}
+\columnbreak
+\textbf{Thread B}
+	\begin{verbatim}
+	B1. while ( busy == true ) {
+	B2.    /* Wait for my turn */
+	B3. }
+	B4. busy = true;
+	B5. /* critical section */
+	B6. busy = false;
+	\end{verbatim}
+\end{multicols}
 
 
-The other problem with flags is that when we have a statement like \texttt{if (busy == 0)} followed by \texttt{busy = 1;} these are two steps here: read of \texttt{busy} and write of \texttt{busy} and an interrupt can come in between the read and the write (the worst possible time, from our perspective). This presents a possible solution: disabling interrupts. If interrupts are disabled, then interrupts generated from the user as well as the normal thread switches the scheduler would perform will not occur. Disabiling interrupts is a crude solution, however, because during the time in which interrupts are disabled, the system will be unable to respond to user input or other events (e.g., a fire alarm or detection of an incoming missile!). If an error is encountered in the critical section and the program is terminated, the system is effectively stuck because no other program will be able to run.
+The problem with flags is that when we have a statement like \texttt{while (busy == true)} followed by \texttt{busy = true;} these are two distinct steps: read of \texttt{busy} and write of \texttt{busy} and a process switch could occur between the read and the write, which is the worst possible timing (as far as we are concerned). If the switch happens at the bad time then threads $A$ and $B$ will both be in the critical section at the same time. This solution is also not satisfactory.
+
+What if instead of using one flag variable, we use an array where each thread writes to its own boolean variable?
+
+\begin{multicols}{2}
+\textbf{Thread A}
+	\begin{verbatim}
+	A1. flag[0] = true;
+	A2. while ( flag[1] ) {
+	A3.    /* Wait for my turn */
+	A4. }
+	A5. /* critical section */
+	A6. flag[0] = false;
+	\end{verbatim}
+\columnbreak
+\textbf{Thread B}
+	\begin{verbatim}
+	B1. flag[1] = true;
+	B2. while ( flag[0] ) {
+	B3.    /* Wait for my turn */
+	B4. }
+	B5. /* critical section */
+	B6. flag[1] = false;
+	\end{verbatim}
+\end{multicols}
+
+Once again, this strategy is defeated by an untimely process switch: if statement A1 sets \texttt{flag[0]} to true and there is a switch to thread $B$, setting \texttt{flag[1]} to true, now both processes are stuck. Neither can advance, because each is waiting for the other to set its \texttt{flag} variable to false. This is, perhaps, slightly better than two threads in the critical section, but we have two threads that are permanently stuck now. This is also not satisfactory: although we want to forbid two threads from being in the critical section at the same time, keeping all threads out forever is not a good solution either.
+
+The attempts at solution we have attempted so far have all been foiled by an untimely process switch, which will be triggered by an interrupt. This presents a possible solution: disabling interrupts. If interrupts are disabled, then interrupts generated from the user as well as the normal thread switches the scheduler would perform will not occur. Disabiling interrupts is a crude solution, however, because during the time in which interrupts are disabled, the system will be unable to respond to user input or other events (e.g., a fire alarm or detection of an incoming missile!). If an error is encountered in the critical section and the program is terminated, the system is effectively stuck because no other program will be able to run.
+
+It gets worse: if we have multiple processors the disabling interrupts will not be sufficient~\cite{osi}. But maybe we're on the right track by getting hardware involved: the problem is we would like to read and maybe write a variable in such a way that cannot be interrupted. The hardware designers were aware of the problem and have kindly provided a facility to help us out: the \textit{Test-and-Set} instruction. 
+
+\subsection*{Test-and-Set}
+The Test-and-Set instruction is a special machine instruction that is performed in a single instruction cycle and is therefore not interruptible. It is therefore an atomic read and write. The idea is that the Test-and-Set instruction returns a boolean value. When run, it will examine the flag variable (in this example, \texttt{i}) and if it is zero, it will set it to 1 and return true. If \texttt{i} is currently set to 1, it will return false. The meaning of the return value is clear: if it is true, it is the current thread's turn to enter the critical section. The Test-and-Set instruction is not actually implemented like this, but a description of its functionality in C is:
+
+\begin{verbatim}
+boolean testAndSet( int i ) {
+  if ( i == 0 ) {
+    i = 1;
+    return true;
+  } else {
+    return false;
+  }
+}
+\end{verbatim}
+
+Now, to make use of the \texttt{testAndSet} routine. Let us assume we have an integer variable called \texttt{busy} that is initialized at program startup to 0. The implementation is the same for both threads so there is no need to show them side by side.
+
+\begin{verbatim}
+while ( !testAndSet( busy ) ) {
+   /* Wait for my turn */
+}
+/* critical section */
+busy = 0;
+\end{verbatim}
+
+Finally, we have something that will provide mutual exclusion without the risk that the threads will all get stuck because each thinks another is in the critical section. This is good, but can be improved. The \texttt{while} loop that is constantly checking the value with the Test-and-Set instruction is an example of \textit{busy-waiting}. A given thread is constantly checking and checking and checking the instruction, and this is a waste of time and effort. Thread $A$ will not get into the critical section while thread $B$ is in there and asking constantly does not make $B$ get the job done any faster, just as a child asking ``are we there yet?'' does not improve the speed at which he or she gets to his or her destination.
+
+It is less wasteful of resources and effort if the \texttt{while} loop contains some instructions saying it should wait a little while before checking again (a sleep instruction). Serialization was achievable through messages; and they can be used to get mutual exclusion.
 
 \subsection*{Mutual Exclusion through Messages}
 
 We can also solve the problem of mutual exclusion via messages. Suppose there is a third employee at the power plant, Charlie, who works on the day shift at the same time as Alice. Safety rules say that at least one of them has to monitor the safety of the reactor at all times and therefore they cannot both take lunch at the same time. If we cannot predict when lunch begins or how long it will last, how can Alice and Charlie co-ordinate to make sure they don't take lunch at the same time?
 
-A possible solution: before Alice gets up from her desk to go for lunch, she calls Charlie. If he does answer, she may proceed. If Charlie does not answer, Alice will know he is not at his desk and she cannot leave at the moment. At this point she has two options: one is to simply wait some period of time (perhaps 15 minutes) and call again in the hopes that at that time Charlie will be back from lunch. A better approach would be for Alice to leave a message in Charlie's voice mail box, asking him to call her back when he has finished lunch. Then Alice can go about her work until she gets a call from Charlie and as soon as that happens, she may step out for lunch.
+A possible solution: before Alice gets up from her desk to go for lunch, she calls Charlie. If he does answer, she may proceed. If Charlie does not answer, Alice will know he is not at his desk and she cannot leave at the moment. She can call again, constantly, until she reaches Charlie (busy-waiting), but this ties up a phone line nonstop and is effort intensive for Alice. If she doesn't want to do that, at this point she has two options: one is to simply wait some period of time (perhaps 15 minutes) and call again in the hopes that at that time Charlie will be back from lunch. A better approach would be for Alice to leave a message in Charlie's voice mail box, asking him to call her back when he has finished lunch. Then Alice can go about her work until she gets a call from Charlie and as soon as that happens, she may step out for lunch.
 
 
 \input{bibliography.tex}
