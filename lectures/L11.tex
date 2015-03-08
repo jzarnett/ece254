@@ -36,13 +36,13 @@ This is, incidentally, what is referred to as a ``Heisenbug'' (a portmanteau of 
 We noted earlier that the need for co-ordination in inter-process communication arises from the fact that some area of memory is shared. We also know that all the threads of a process share the same data: in the merge sort algorithm the sorting and merging routines both operate on the same data array. Let's examine a simpler example (from~\cite{lbs}) where a shared variable \texttt{x} is manipulated by two threads $A$ and $B$, in pseudocode:
 
 \begin{multicols}{2}
-\textbf{Thread A}
+\textbf{Thread A}\vspace{-2em}
 	\begin{verbatim}
 	A1. x = 5
 	A2. print x
 	\end{verbatim}
 \columnbreak
-\textbf{Thread B}
+\textbf{Thread B}\vspace{-2em}
 	\begin{verbatim}
 	B1. x = 7
 	
@@ -92,7 +92,7 @@ It is the responsibility of the programmer to identify what critical sections, i
 Our first approach then, is to have a variable to indicate if the critical section is currently in use. Suppose we have two threads:
 
 \begin{multicols}{2}
-\textbf{Thread A}
+\textbf{Thread A}\vspace{-2em}
 	\begin{verbatim}
 	A1. while ( turn != 0 ) {
 	A2.    /* Wait for my turn */
@@ -101,7 +101,7 @@ Our first approach then, is to have a variable to indicate if the critical secti
 	A5. turn = 1;
 	\end{verbatim}
 \columnbreak
-\textbf{Thread B}
+\textbf{Thread B}\vspace{-2em}
 	\begin{verbatim}
 	B1. while ( turn != 1 ) {
 	B2.   /* Wait for my turn */
@@ -114,7 +114,7 @@ Our first approach then, is to have a variable to indicate if the critical secti
 This scheme enforces strict alternation: first it is the turn of thread $A$, then the turn of thread $B$, then back to 1, and so on. What if thread $A$ is to run more often than $B$? If thread $B$ terminates then thread $A$ will be stuck forever because the variable \texttt{turn} will always be saying that it is thread $B$'s turn. This solution is obviously not satisfactory. Another approach then:
 
 \begin{multicols}{2}
-\textbf{Thread A}
+\textbf{Thread A}\vspace{-2em}
 	\begin{verbatim}
 	A1. while ( busy == true ) {
 	A2.    /* Wait for my turn */
@@ -124,7 +124,7 @@ This scheme enforces strict alternation: first it is the turn of thread $A$, the
 	A6. busy = false;
 	\end{verbatim}
 \columnbreak
-\textbf{Thread B}
+\textbf{Thread B}\vspace{-2em}
 	\begin{verbatim}
 	B1. while ( busy == true ) {
 	B2.    /* Wait for my turn */
@@ -141,7 +141,7 @@ The problem with flags is that when we have a statement like \texttt{while (busy
 What if instead of using one flag variable, we use an array where each thread writes to its own boolean variable?
 
 \begin{multicols}{2}
-\textbf{Thread A}
+\textbf{Thread A}\vspace{-2em}
 	\begin{verbatim}
 	A1. flag[0] = true;
 	A2. while ( flag[1] ) {
@@ -151,7 +151,7 @@ What if instead of using one flag variable, we use an array where each thread wr
 	A6. flag[0] = false;
 	\end{verbatim}
 \columnbreak
-\textbf{Thread B}
+\textbf{Thread B}\vspace{-2em}
 	\begin{verbatim}
 	B1. flag[1] = true;
 	B2. while ( flag[0] ) {
@@ -194,13 +194,7 @@ busy = 0;
 
 Finally, we have something that will provide mutual exclusion without the risk that the threads will all get stuck because each thinks another is in the critical section. This is good, but can be improved. The \texttt{while} loop that is constantly checking the value with the Test-and-Set instruction is an example of \textit{busy-waiting}. A given thread is constantly checking and checking and checking the instruction, and this is a waste of time and effort. Thread $A$ will not get into the critical section while thread $B$ is in there and asking constantly does not make $B$ get the job done any faster, just as a child asking ``are we there yet?'' does not improve the speed at which he or she gets to his or her destination.
 
-It is less wasteful of resources and effort if the \texttt{while} loop contains some instructions saying it should wait a little while before checking again (a sleep instruction). Serialization was achievable through messages; and they can be used to get mutual exclusion.
-
-\subsection*{Mutual Exclusion through Messages}
-
-We can also solve the problem of mutual exclusion via messages. Suppose there is a third employee at the power plant, Charlie, who works on the day shift at the same time as Alice. Safety rules say that at least one of them has to monitor the safety of the reactor at all times and therefore they cannot both take lunch at the same time. If we cannot predict when lunch begins or how long it will last, how can Alice and Charlie co-ordinate to make sure they don't take lunch at the same time?
-
-A possible solution: before Alice gets up from her desk to go for lunch, she calls Charlie. If he does answer, she may proceed. If Charlie does not answer, Alice will know he is not at his desk and she cannot leave at the moment. She can call again, constantly, until she reaches Charlie (busy-waiting), but this ties up a phone line nonstop and is effort intensive for Alice. If she doesn't want to do that, at this point she has two options: one is to simply wait some period of time (perhaps 15 minutes) and call again in the hopes that at that time Charlie will be back from lunch. A better approach would be for Alice to leave a message in Charlie's voice mail box, asking him to call her back when he has finished lunch. Then Alice can go about her work until she gets a call from Charlie and as soon as that happens, she may step out for lunch.
+It is less wasteful of resources and effort if the \texttt{while} loop contains some instructions saying it should wait a little while before checking again (a sleep instruction). Serialization was achievable through messages; and they can be used to get mutual exclusion. This is the topic to be examined next.
 
 
 \input{bibliography.tex}

@@ -1,0 +1,27 @@
+\input{header.tex}
+
+\begin{document}
+
+\lecture{ 12 --- Semaphores }{\term}{Jeff Zarnett}
+
+\section*{Mutual Exclusion through Messages}
+
+Recall from earlier the example of the employees Alice and Bob who worked at the Springfield Nuclear Power Plant in Sector 7G.  Suppose there is a third employee at the power plant, Charlie, who works on the day shift at the same time as Alice. Safety rules say that at least one of them has to monitor the safety of the reactor at all times and therefore they cannot both take lunch at the same time. If we cannot predict when lunch begins or how long it will last, how can Alice and Charlie co-ordinate to make sure they don't take lunch at the same time?
+
+A possible solution: before Alice gets up from her desk to go for lunch, she calls Charlie. If he does answer, she may proceed. If Charlie does not answer, Alice will know he is not at his desk and she cannot leave at the moment. She can call again, constantly, until she reaches Charlie (busy-waiting), but this ties up a phone line nonstop and is effort intensive for Alice. If she doesn't want to do that, at this point she has two options: one is to simply wait some period of time (perhaps 15 minutes) and call again in the hopes that at that time Charlie will be back from lunch. A better approach would be for Alice to leave a message in Charlie's voice mail box, asking him to call her back when he has finished lunch. Then Alice can go about her work until she gets a call from Charlie and as soon as that happens, she may step out for lunch.
+
+Busy waiting has already been found inadequate as a solution. 
+
+The earlier definition of mutual exclusion said only that one thread may be in the critical section at a time. This is the minimum, but there additional desirable properties that will be used to evaluate any solution~\cite{osi}:
+\begin{enumerate}
+	\item Mutual exclusion must apply (this criterion eliminated most of the flag examples earlier).
+	\item A thread that halts outside the critical section must not interfere with other threads (the strict alternation routine, even if implemented with Test-and-Set, would fail on this criterion).
+	\item It must not be possible for a thread requiring access to a critical section to be delayed indefinitely (the situation where all threads get stuck, each thinking another is in the critical section, would fail this criterion).
+	\item When no thread is in the critical section, a thread that requests access should be allowed to enter right away (no unnecessary waiting).
+	\item No assumptions are made about what the threads will do or the number of processors in the system (so it should be a general solution, not a special case).
+	\item A thread remains inside the critical section for a finite time only (this is more of an assumption than a criterion, but our solution must provide a way to indicate the thread has left the critical section).
+\end{enumerate}
+
+\input{bibliography.tex}
+
+\end{document}
