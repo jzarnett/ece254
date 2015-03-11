@@ -6,12 +6,6 @@
 
 \section*{Mutual Exclusion through Messages}
 
-Recall from earlier the example of the employees Alice and Bob who worked at the Springfield Nuclear Power Plant in Sector 7G.  Suppose there is a third employee at the power plant, Charlie, who works on the day shift at the same time as Alice. Safety rules say that at least one of them has to monitor the safety of the reactor at all times and therefore they cannot both take lunch at the same time. If we cannot predict when lunch begins or how long it will last, how can Alice and Charlie co-ordinate to make sure they don't take lunch at the same time?
-
-A possible solution: before Alice gets up from her desk to go for lunch, she calls Charlie. If he does answer, she may proceed. If Charlie does not answer, Alice will know he is not at his desk and she cannot leave at the moment. She can call again, constantly, until she reaches Charlie (busy-waiting), but this ties up a phone line nonstop and is effort intensive for Alice. If she doesn't want to do that, at this point she has two options: one is to simply wait some period of time (perhaps 15 minutes) and call again in the hopes that at that time Charlie will be back from lunch. A better approach would be for Alice to leave a message in Charlie's voice mail box, asking him to call her back when he has finished lunch. Then Alice can go about her work until she gets a call from Charlie and as soon as that happens, she may step out for lunch.
-
-Busy waiting has already been found inadequate as a solution. 
-
 The earlier definition of mutual exclusion said only that one thread may be in the critical section at a time. This is the minimum, but there additional desirable properties that will be used to evaluate any solution~\cite{osi}:
 \begin{enumerate}
 	\item Mutual exclusion must apply (this criterion eliminated most of the flag examples earlier).
@@ -21,6 +15,37 @@ The earlier definition of mutual exclusion said only that one thread may be in t
 	\item No assumptions are made about what the threads will do or the number of processors in the system (so it should be a general solution, not a special case).
 	\item A thread remains inside the critical section for a finite time only (this is more of an assumption than a criterion, but our solution must provide a way to indicate the thread has left the critical section).
 \end{enumerate}
+
+Recall from earlier the example of the employees Alice and Bob who worked at the Springfield Nuclear Power Plant in Sector 7G.  Suppose there is a third employee at the power plant, Charlie, who works on the day shift at the same time as Alice. Safety rules say that at least one of them has to monitor the safety of the reactor at all times and therefore they cannot both take lunch at the same time. If we cannot predict when lunch begins or how long it will last, how can Alice and Charlie co-ordinate to make sure they don't take lunch at the same time?
+
+A possible solution: before Alice gets up from her desk to go for lunch, she calls Charlie. If he does answer, she may proceed. If Charlie does not answer, Alice will know he is not at his desk and she cannot leave at the moment. She can call again, constantly, until she reaches Charlie (busy-waiting), but this ties up a phone line nonstop and is effort intensive for Alice. If she doesn't want to do that, at this point she has two options: one is to simply wait some period of time (perhaps 15 minutes) and call again in the hopes that at that time Charlie will be back from lunch. A better approach would be for Alice to leave a message in Charlie's voice mail box, asking him to call her back when he has finished lunch. Then Alice can go about her work until she gets a call from Charlie and as soon as that happens, she may step out for lunch.
+
+Busy waiting has already been found inadequate as a solution. It wastes CPU time that another process or thread could be putting to productive use. The approach of ``wait 15 minutes and try again'' might be adequate for Alice as a human, but for the computer it is not ideal. If thread $B$ is in the critical section when $A$ tries to get in, and $A$ then sleeps for 2000~ms before trying again, this at least means $A$ is not wasting CPU cycles while it tries futilely to ask ``is it my turn now? Now? Now? Now? Now? Now'', but if $B$ is finished after 20 ms, then thread $A$ waits unnecessarily for 1980~ms. What we want is something that resembles the call-when-finished semantics of Alice leaving a message and Charlie calling her back. That solution is called the Semaphore.
+
+\section*{Semaphore}
+A semaphore, outside of the context of computing, is a system of signals used for communication. Before ships had radios, when two friendly ships were in visual range, they would communicate with one another through flag semaphores, which is a fancy way of saying each ship had someone holding certain flags in a specific position. Thus the two ships could co-ordinate at a distance, even if the distance was limited to visual range. This worked dramatically better than many alternatives (e.g., shouting).
+
+The computer semaphore was invented in 1965 by Edsger Dijkstra, a brilliant Dutch computer scientist who is sometimes maligned in textbooks as being eccentric or unusual.  He described a data structure that can be used to solve synchronization problems via messages. Although the version we use now is not exactly the same as the original description, even 50 years later, the core idea is unchanged.
+
+We will begin with the \textit{binary semaphore}: this is a variable that has two values, 0 and 1. It can be initialized to 0 or to 1. The semaphore has two operations: \texttt{wait} and \texttt{signal}. In the original paper, \texttt{wait} was called \texttt{P} and \texttt{wait} was called \texttt{V}, but the names in common usage have become a little more descriptive. Mind you, if you can read/write Dutch as I can, the names make some sense: \texttt{P} is short for \textit{proberen}, ``to test'', and \texttt{V} is short for \textit{verhogen}, ``to raise'' or ``to increment''. But, for historical reasons as much as any other, the traditional lingua franca of computers is English, so the English names have tended to dominate. Furthermore, \texttt{signal} is also called \texttt{post} in many textbooks.
+
+The \texttt{wait} operation on the semaphore is how a program tries to enter the critical section. When \texttt{wait} is called, if the semaphore value is 1, set it to 0 and this thread may enter the critical section and continue. If the semaphore is 0, some other thread is in the critical section and the current thread must \textit{wait} its turn. The thread that called \texttt{wait} will be blocked by the operating system, just as if it asked for memory or a disk operation. This is sometimes referred to as decrementing the semaphore (because the value changes from 1 to 0).
+
+The \texttt{signal} operation is how a program \textit{signals}, or indicates, it is finished with the critical section. When this is called, if the semaphore is 1, do nothing; if the semaphore is 0 and there is a task blocked awaiting that semaphore, that task may be unblocked; else set the semaphore to 1. This is also sometimes called incrementing the semaphore.
+
+If this is still confusing, consider the following analogy. Suppose you like coffee, and going to a particular coffee shop because there you can get your drink exactly the way you like it: half caf, no whip, extra hot, extra foam, two shot, soy milk latte\footnote{For the record, the author drinks tea, black.}. After this delightful beverage it may be the case that you need to use the washroom. The washroom is locked at such places, so to get in you will need the key, which is available by asking one of the employees. If nobody is currently in the washroom, you will get the key and can proceed. If it is currently occupied, you will have to wait. When the key is returned, if anyone is waiting, the employee will give the key to the first person in line for the washroom; otherwise he or she will put the key away behind the counter.
+
+Observe that the operating system is needed to make this work: if thread $A$ attempts to wait on a semaphore that some other thread already has, it will be blocked and the operating system knows not to schedule it to run until it is unblocked. When thread $B$ is finished and signals the semaphore it is holding, that will unblock $A$ and allow it to run again.
+
+Note also that the semaphore does not provide any facility to ``check''the current value. Thus a thread does not know in advance if it will block when it waits on the semaphore. It can only wait and may be blocked or may proceed directly into the critical section if there is no other thread in there at the moment.
+
+When a thread signals a semaphore, it likewise does not know if any other thread(s) are waiting on that semaphore. There is no facility to check this, either. When thread $A$ signals a semaphore, if another thread $B$ is waiting, $B$ will be unblocked and either thread $A$ or thread $B$ may continue execution (or both, if it is a SMP system), or another unrelated thread may be the one to continue execution. We have no way of knowing.
+
+\subsection*{Example: Linked List Integrity}
+
+\subsection*{Counting Semaphores}
+
+
 
 \input{bibliography.tex}
 
