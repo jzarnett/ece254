@@ -41,10 +41,18 @@ Note also that the semaphore does not provide any facility to ``check''the curre
 
 When a thread signals a semaphore, it likewise does not know if any other thread(s) are waiting on that semaphore. There is no facility to check this, either. When thread $A$ signals a semaphore, if another thread $B$ is waiting, $B$ will be unblocked and either thread $A$ or thread $B$ may continue execution (or both, if it is a SMP system), or another unrelated thread may be the one to continue execution. We have no way of knowing.
 
+On the subject of observation, note that nothing about the semaphore as so defined protects against certain ``bad'' behaviour. Suppose thread $C$ would like to enter the critical section. The programmer of this task is malicious as well as impatient: ``my task is FAR too important to wait for those other processes and threads,'' he says, as he implements his code such that before he waits on the semaphore, he signals it. Even though $A$ or $B$ might be in the critical section, the semaphore gets signalled so he is more or less certain that his program will now get to enter the critical section. It's not foolproof: if there are other threads waiting, they might get woken up to proceed instead of $C$; much depends on the scheduler. Nevertheless, this is really bad: one process can wreak all kinds of havoc by letting another process into the critical section. Though the example here makes the author of thread $C$ a scheming villain (because the example is funnier that way), such a situation may occur without malicious intent if it is simply the result of a programming error.
+
+The problem identified in the previous paragraph is usually solved by supplementing the basic binary semaphore. A data structure called a \textit{mutex} (from \textbf{mut}ual \textbf{ex}clusion) is a binary semaphore with an additional rule enforced: only the thread that has called \texttt{wait} may \texttt{signal} that semaphore. This adds a small amount of extra bookkeeping to the semaphore, but this is a reasonable price to pay.
+
 \subsection*{Example: Linked List Integrity}
 
 \subsection*{Counting Semaphores}
+Binary semaphores are useful, and we can generalize this concept to what is known as a \textit{counting} or \textit{general} semaphore. Instead of having only the values 0 and 1, the setup routine for the counting semaphore allows the choice of an integer value and this is the maximum value. A thread that waits on that semaphore will decrement the integer by 1; a thread that posts on the semaphore will increment the integer by 1. If a thread attempts to wait on a semaphore and the decrement operation makes the integer value zero or negative, the calling thread is blocked. If, however, the semaphore is, for example, initialized with 5 and the current value is 2, a thread that waits on that general semaphore will not be blocked.
 
+
+
+In some operating systems there is no distinction between binary and counting semaphores; the binary semaphore behaviour is achieved by creating a counting semaphore that will permit only one thread into the critical section at a time. 
 
 
 \input{bibliography.tex}
