@@ -51,18 +51,42 @@ The problem identified in the previous paragraph is usually solved by supplement
 We will now examine a situation where a semaphore helps to prevent a synchronization error. This example comes from~\cite{mte241}. Imagine we have a shared linked list defined as:
 
 \begin{verbatim}
-typedef struct single_node {  void *element;  struct single_node *next;} single_node_t;
-typedef struct single_list {  single_node_t *head;  single_node_t *tail;  int size;} single_list_t;
+typedef struct single_node {
+  void *element;
+  struct single_node *next;
+} single_node_t;
+
+typedef struct single_list {
+  single_node_t *head;
+  single_node_t *tail;
+  int size;
+} single_list_t;
 
 
-void single_list_init( single_list_t *list ) {  list->head = NULL;  list->tail = NULL;  list->size = 0;}
+void single_list_init( single_list_t *list ) {
+  list->head = NULL;
+  list->tail = NULL;
+  list->size = 0;
+}
 
-bool push_front( single_list_t *list, void *obj ) {  single_node_t *tmp = (single_node_t *) malloc( sizeof( single_node_t ) );  
-  if ( tmp == NULL ) {    return false;  }  
-  tmp->element = obj;  tmp->next = list->head;  list->head = tmp;
+bool push_front( single_list_t *list, void *obj ) {
+  single_node_t *tmp = (single_node_t *) malloc( sizeof( single_node_t ) );
+  
+  if ( tmp == NULL ) {
+    return false;
+  }
+  
+  tmp->element = obj;
+  tmp->next = list->head;
+  list->head = tmp;
 
-  if ( list->size == 0 ) {     list->tail = tmp;  }
-     ++(list->size);   return true;}
+  if ( list->size == 0 ) {
+     list->tail = tmp;
+  }
+  
+   ++(list->size);
+   return true;
+}
 \end{verbatim}
 
 If only one thread access this data structure, we do not have a problem, but it was a shared linked list. Suppose a thread runs and tries to add an element $A$ to the list using the \texttt{push\_front} function. Right before the increment of the \texttt{size} field takes place there is a process switch. At this point, the new node has been allocated and initialized, the pointers of \texttt{head} and \texttt{tail} have been updated, but \texttt{size} is 0. 
@@ -91,7 +115,7 @@ This is an \textit{inconsistent state}: the linked list has two elements in it b
 \subsection*{Binary Semaphore Syntax}
 The linked list problem just discussed can be solved easily if a semaphore is employed. The syntax we will use is as follows:
 
-\texttt{semaphore\_init( semaphore\_t *sem, int n )}\\
+\texttt{semaphore\_init( semaphore\_t *sem, int i )}\\
 Initialize the semaphore to \texttt{n} (can be 0 or 1).
 
 \texttt{semaphore\_wait( semaphore\_t *sem )}\\
@@ -108,27 +132,51 @@ Now that we have the appropriate syntax we can apply it to the linked list examp
 Finally, the \texttt{semaphore\_wait} and \texttt{semaphore\_signal} operations need to be added to \texttt{push\_front} at the start and end of the critical section, respectively. Recall from earlier that we want the critical section to be as small as it can be. Putting it all together:
 
 \begin{verbatim}
-typedef struct single_node {  void *element;  struct single_node *next;} single_node_t;
-typedef struct single_list {  single_node_t *head;  single_node_t *tail;  int size;
-  semaphore_t mutex;} single_list_t;
+typedef struct single_node {
+  void *element;
+  struct single_node *next;
+} single_node_t;
+
+typedef struct single_list {
+  single_node_t *head;
+  single_node_t *tail;
+  int size;
+  semaphore_t mutex;
+} single_list_t;
 
 
-void single_list_init( single_list_t *list ) {  list->head = NULL;  list->tail = NULL;  list->size = 0;
+void single_list_init( single_list_t *list ) {
+  list->head = NULL;
+  list->tail = NULL;
+  list->size = 0;
 
-  semaphore_init( &( list->mutex), 0 );}
+  semaphore_init( &( list->mutex), 0 );
+}
 
-bool push_front( single_list_t *list, void *obj ) {  single_node_t *tmp = (single_node_t *) malloc( sizeof( single_node_t ) );  
-  if ( tmp == NULL ) {    return false;  }  
+bool push_front( single_list_t *list, void *obj ) {
+  single_node_t *tmp = (single_node_t *) malloc( sizeof( single_node_t ) );
+  
+  if ( tmp == NULL ) {
+    return false;
+  }
+  
   tmp->element = obj;
   
   semaphore_wait( &( list->mutex ) ); {
-      tmp->next = list->head;    list->head = tmp;
+  
+    tmp->next = list->head;
+    list->head = tmp;
 
-    if ( list->size == 0 ) {       list->tail = tmp;    }    ++(list->size);
+    if ( list->size == 0 ) {
+       list->tail = tmp;
+    }
+    ++(list->size);
   
   } semaphore_signal( &( list->mutex ) );
   
-    return true;}
+  
+  return true;
+}
 \end{verbatim}
 
 Strictly speaking, the braces (\{ \}) to enclose the critical region (between the wait and signal operations) are not necessary. This is just a use of C syntax to make it more obvious what the critical region is and to make it harder to make a mistake.
@@ -139,6 +187,11 @@ The critical section here just encloses the modification of the shared linked li
 Binary semaphores are useful, and we can generalize this concept to what is known as a \textit{counting} or \textit{general} semaphore. Instead of having only the values 0 and 1, the setup routine for the counting semaphore allows the choice of an integer value and this is the maximum value. A thread that waits on that semaphore will decrement the integer by 1; a thread that signals on the semaphore will increment the integer by 1. If a thread attempts to wait on a semaphore and the decrement operation makes the integer value zero or negative, the calling thread is blocked. If, however, the semaphore is, for example, initialized with 5 and the current value is 2, a thread that waits on that general semaphore will not be blocked.
 
 In some operating systems there is no distinction between binary and counting semaphores; the binary semaphore behaviour is achieved by creating a counting semaphore that will permit only one thread into the critical section at a time. 
+
+The general semaphore initialization function signature now takes an extra parameter, \texttt{n}, to show the maximum value of the semaphore.
+
+\texttt{semaphore\_init( semaphore\_t *sem, int i, int n )}\\
+Initialize the semaphore to \texttt{i} with a maximum value of \texttt{n}.
 
 
 \input{bibliography.tex}
