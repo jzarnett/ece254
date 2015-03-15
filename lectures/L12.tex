@@ -20,7 +20,9 @@ Recall from earlier the example of the employees Alice and Bob who worked at the
 
 A possible solution: before Alice gets up from her desk to go for lunch, she calls Charlie. If he does answer, she may proceed. If Charlie does not answer, Alice will know he is not at his desk and she cannot leave at the moment. She can call again, constantly, until she reaches Charlie (busy-waiting), but this ties up a phone line nonstop and is effort intensive for Alice. If she doesn't want to do that, at this point she has two options: one is to simply wait some period of time (perhaps 15 minutes) and call again in the hopes that at that time Charlie will be back from lunch. A better approach would be for Alice to leave a message in Charlie's voice mail box, asking him to call her back when he has finished lunch. Then Alice can go about her work until she gets a call from Charlie and as soon as that happens, she may step out for lunch.
 
-Busy waiting has already been found inadequate as a solution. It wastes CPU time that another process or thread could be putting to productive use. The approach of ``wait 15 minutes and try again'' might be adequate for Alice as a human, but for the computer it is not ideal. If thread $B$ is in the critical section when $A$ tries to get in, and $A$ then sleeps for 2000~ms before trying again, this at least means $A$ is not wasting CPU cycles while it tries futilely to ask ``is it my turn now? Now? Now? Now? Now? Now'', but if $B$ is finished after 20 ms, then thread $A$ waits unnecessarily for 1980~ms. What we want is something that resembles the call-when-finished semantics of Alice leaving a message and Charlie calling her back. That solution is called the Semaphore.
+Busy waiting has already been found inadequate as a solution. It wastes CPU time that another process or thread could be putting to productive use. The approach of ``wait 15 minutes and try again'' might be adequate for Alice as a human, but for the computer it is not ideal. If thread $B$ is in the critical section when $A$ tries to get in, and $A$ then sleeps for 2000~ms before trying again, this at least means $A$ is not wasting CPU cycles while it tries futilely to ask ``is it my turn now? Now? Now? Now? Now? Now?'', but if $B$ is finished after 20 ms, then thread $A$ waits unnecessarily for 1980~ms. 
+
+What we want is something that resembles the call-when-finished semantics of Alice leaving a message and Charlie calling her back. That solution is called the Semaphore.
 
 \section*{Semaphore}
 A semaphore, outside of the context of computing, is a system of signals used for communication. Before ships had radios, when two friendly ships were in visual range, they would communicate with one another through flag semaphores, which is a fancy way of saying each ship had someone holding certain flags in a specific position. Thus the two ships could co-ordinate at a distance, even if the distance was limited to visual range. This worked dramatically better than many alternatives (e.g., shouting).
@@ -46,11 +48,95 @@ On the subject of observation, note that nothing about the semaphore as so defin
 The problem identified in the previous paragraph is usually solved by supplementing the basic binary semaphore. A data structure called a \textit{mutex} (from \textbf{mut}ual \textbf{ex}clusion) is a binary semaphore with an additional rule enforced: only the thread that has called \texttt{wait} may \texttt{signal} that semaphore. This adds a small amount of extra bookkeeping to the semaphore, but this is a reasonable price to pay.
 
 \subsection*{Example: Linked List Integrity}
+We will now examine a situation where a semaphore helps to prevent a synchronization error. This example comes from~\cite{mte241}. Imagine we have a shared linked list defined as:
+
+\begin{verbatim}
+typedef struct single_node {  void *element;  struct single_node *next;} single_node_t;
+typedef struct single_list {  single_node_t *head;  single_node_t *tail;  int size;} single_list_t;
+
+
+void single_list_init( single_list_t *list ) {  list->head = NULL;  list->tail = NULL;  list->size = 0;}
+
+bool push_front( single_list_t *list, void *obj ) {  single_node_t *tmp = (single_node_t *) malloc( sizeof( single_node_t ) );  
+  if ( tmp == NULL ) {    return false;  }  
+  tmp->element = obj;  tmp->next = list->head;  list->head = tmp;
+
+  if ( list->size == 0 ) {     list->tail = tmp;  }
+     ++(list->size);   return true;}
+\end{verbatim}
+
+If only one thread access this data structure, we do not have a problem, but it was a shared linked list. Suppose a thread runs and tries to add an element $A$ to the list using the \texttt{push\_front} function. Right before the increment of the \texttt{size} field takes place there is a process switch. At this point, the new node has been allocated and initialized, the pointers of \texttt{head} and \texttt{tail} have been updated, but \texttt{size} is 0. 
+
+\begin{center}
+\includegraphics[width=0.25\textwidth]{images/linkedlist1.png}\\
+The linked list at the time of the thread switch~\cite{mte241}.
+\end{center}
+
+Now, the second thread executes and wants to add $B$ to the linked list. In the conditional statement, \texttt{list->size == 0} evaluates to true. Thus, the \texttt{tail} pointer is updated.
+
+\begin{center}
+\includegraphics[width=0.35\textwidth]{images/linkedlist2.png}\\
+The linked list after the second thread adds $B$~\cite{mte241}.
+\end{center}
+
+When the first thread gets to run again, it will resume where it left off: it increments the \texttt{size} integer, leaving the final state: \texttt{head} and \texttt{tail} both point to element $B$, even though there is element $A$ in the list.
+
+\begin{center}
+\includegraphics[width=0.35\textwidth]{images/linkedlist3.png}\\
+The linked list after the first thread resumes~\cite{mte241}.
+\end{center}
+
+This is an \textit{inconsistent state}: the linked list has two elements in it but the \texttt{tail} pointer is wrong. An attempt to remove an element from the list will reveal the problem, which can manifest in a few ways, depending on how the removal routine is implemented. If we try to remove the front element we might check that \texttt{head} and \texttt{tail} are equal, and that may give the mistaken impression that $B$ is the last element in the list, so we ``lose'' $A$ and it becomes a memory leak. Or perhaps the \texttt{head} pointer will be updated but \texttt{tail} will still point to $B$ even after it has been freed, which can result in a segmentation fault or invalid access.
+
+\subsection*{Binary Semaphore Syntax}
+The linked list problem just discussed can be solved easily if a semaphore is employed. The syntax we will use is as follows:
+
+\texttt{semaphore\_init( semaphore\_t *sem, int n )}\\
+Initialize the semaphore to \texttt{n} (can be 0 or 1).
+
+\texttt{semaphore\_wait( semaphore\_t *sem )}\\
+Wait on a semaphore.
+
+\texttt{semaphore\_signal( semaphore\_t *sem)}\\
+If the semaphore is 1, do nothing.\\
+If the semaphore is 0 and there is at least one task blocked on this semaphore, unblock it; otherwise set the semaphore to 1.
+
+\subsection*{Applying the Semaphore to the Linked List}
+
+Now that we have the appropriate syntax we can apply it to the linked list example from this section. We will add to the linked list structure (\texttt{struct single\_list}) a semaphore: \texttt{semaphore\_t mutex;}. In the initialization routine, we need to call the initialization method: \texttt{semaphore\_init( \&( list->mutex ), 0 );}
+
+Finally, the \texttt{semaphore\_wait} and \texttt{semaphore\_signal} operations need to be added to \texttt{push\_front} at the start and end of the critical section, respectively. Recall from earlier that we want the critical section to be as small as it can be. Putting it all together:
+
+\begin{verbatim}
+typedef struct single_node {  void *element;  struct single_node *next;} single_node_t;
+typedef struct single_list {  single_node_t *head;  single_node_t *tail;  int size;
+  semaphore_t mutex;} single_list_t;
+
+
+void single_list_init( single_list_t *list ) {  list->head = NULL;  list->tail = NULL;  list->size = 0;
+
+  semaphore_init( &( list->mutex), 0 );}
+
+bool push_front( single_list_t *list, void *obj ) {  single_node_t *tmp = (single_node_t *) malloc( sizeof( single_node_t ) );  
+  if ( tmp == NULL ) {    return false;  }  
+  tmp->element = obj;
+  
+  semaphore_wait( &( list->mutex ) ); {
+      tmp->next = list->head;    list->head = tmp;
+
+    if ( list->size == 0 ) {       list->tail = tmp;    }    ++(list->size);
+  
+  } semaphore_signal( &( list->mutex ) );
+  
+    return true;}
+\end{verbatim}
+
+Strictly speaking, the braces (\{ \}) to enclose the critical region (between the wait and signal operations) are not necessary. This is just a use of C syntax to make it more obvious what the critical region is and to make it harder to make a mistake.
+
+The critical section here just encloses the modification of the shared linked list. In theory one might put the wait and signal operations at the start and end of the entire function, respectively. This is, however, suboptimal: it forces unnecessary waiting. In this specific example, including the call to \texttt{malloc} is especially bad; the memory allocation itself can block if insufficient memory is available. Thus the process currently in the critical section is blocked and that means no other thread can enter the critical section. This might result in the system getting totally stuck~\cite{mte241}.
 
 \subsection*{Counting Semaphores}
-Binary semaphores are useful, and we can generalize this concept to what is known as a \textit{counting} or \textit{general} semaphore. Instead of having only the values 0 and 1, the setup routine for the counting semaphore allows the choice of an integer value and this is the maximum value. A thread that waits on that semaphore will decrement the integer by 1; a thread that posts on the semaphore will increment the integer by 1. If a thread attempts to wait on a semaphore and the decrement operation makes the integer value zero or negative, the calling thread is blocked. If, however, the semaphore is, for example, initialized with 5 and the current value is 2, a thread that waits on that general semaphore will not be blocked.
-
-
+Binary semaphores are useful, and we can generalize this concept to what is known as a \textit{counting} or \textit{general} semaphore. Instead of having only the values 0 and 1, the setup routine for the counting semaphore allows the choice of an integer value and this is the maximum value. A thread that waits on that semaphore will decrement the integer by 1; a thread that signals on the semaphore will increment the integer by 1. If a thread attempts to wait on a semaphore and the decrement operation makes the integer value zero or negative, the calling thread is blocked. If, however, the semaphore is, for example, initialized with 5 and the current value is 2, a thread that waits on that general semaphore will not be blocked.
 
 In some operating systems there is no distinction between binary and counting semaphores; the binary semaphore behaviour is achieved by creating a counting semaphore that will permit only one thread into the critical section at a time. 
 
