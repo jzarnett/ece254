@@ -172,7 +172,7 @@ The barrier pattern is a generalization of the rendezvous pattern; a way of havi
 	2. count++
 	3. signal( mutex )
 	4. if count == n
-	5. signal( barrier )
+	5.     signal( barrier )
 	6. end if
 	7. wait( barrier )
   \end{verbatim}
@@ -188,9 +188,9 @@ Perhaps the idea occurred to you that the $n$th thread to arrive should signal $
 	2. count++
 	3. signal( mutex )
 	4. if count == n
-	5. for i from 1 to  n-1
-	6. signal( barrier )
-	7. end for
+	5.     for i from 1 to  n-1
+	6.         signal( barrier )
+	7.     end for
 	8. end if
 	9. wait( barrier )
   \end{verbatim}
@@ -204,7 +204,7 @@ This is a solution, that allows all of the $n$ threads to proceed (none get stuc
 	2. count++
 	3. signal( mutex )
 	4. if count == n
-	5. signal( barrier )
+	5.     signal( barrier )
 	6. end if
 	7. wait( barrier )
 	8. signal( barrier )
@@ -220,7 +220,7 @@ Alert readers may have noticed something that causes some minor distress: on lin
 	1. wait( mutex )
 	2. count++
 	3. if count == n
-	4. signal( barrier )
+	4.     signal( barrier )
 	5. end if
 	6. wait( barrier )
 	7. signal( barrier )
@@ -240,7 +240,7 @@ The barrier solution we have is good (as long as we can live with the read of th
 	 2. count++
 	 3. signal( mutex )
 	 4. if count == n
-	 5. signal( turnstile )
+	 5.     signal( turnstile )
 	 6. end if
 	 7. wait( turnstile )
 	 8. signal( turnstile )
@@ -249,7 +249,7 @@ The barrier solution we have is good (as long as we can live with the read of th
 	11. count--
 	12. signal( mutex )
 	13. if count == 0
-	14. wait( turnstile )
+	14.     wait( turnstile )
 	15. end if
   \end{verbatim}
 \vspace{-2em}
@@ -262,7 +262,7 @@ There are two problems with the above implementation. Suppose thread $n-1$ is ab
 	 1. wait( mutex )
 	 2. count++
 	 3. if count == n
-	 4. signal( turnstile )
+	 4.     signal( turnstile )
 	 5. end if
 	 6. signal( mutex )
 	 7. wait( turnstile )
@@ -271,7 +271,7 @@ There are two problems with the above implementation. Suppose thread $n-1$ is ab
 	10. wait( mutex )
 	11. count--
 	12. if count == 0
-	13. wait( turnstile )
+	13.     wait( turnstile )
 	14. end if
 	15. signal( mutex )
   \end{verbatim}
@@ -300,8 +300,8 @@ From left to right, the seven steps of the diagram are~\cite{mte241}:
 	 1. wait( mutex )
 	 2. count++
 	 3. if count == n
-	 4. wait( turnstile2 )
-	 5. signal( turnstile1 )
+	 4.     wait( turnstile2 )
+	 5.     signal( turnstile1 )
 	 6. end if
 	 7. signal( mutex )
 	 8. wait( turnstile1 )
@@ -310,8 +310,8 @@ From left to right, the seven steps of the diagram are~\cite{mte241}:
 	11. wait( mutex )
 	12. count--
 	13. if count == 0
-	14. wait( turnstile1 )
-	15. signal( turnstile2 )
+	14.     wait( turnstile1 )
+	15.     signal( turnstile2 )
 	16. end if
 	17. signal( mutex )
 	18. wait( turnstile2 )
