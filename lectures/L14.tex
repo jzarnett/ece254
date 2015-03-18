@@ -201,7 +201,7 @@ A new binary semaphore is needed here, called \texttt{turnstile}.
 	 1. wait( turnstile )
 	 2. wait( roomEmpty )
 	 3. [write data]
-	 4. signal( turnstile)
+	 4. signal( turnstile )
 	 5. signal( roomEmpty )
 	 
 	 
@@ -236,13 +236,40 @@ A new binary semaphore is needed here, called \texttt{turnstile}.
 \end{multicols}
 \vspace{-2em}
 
-TODO: Describe solution
+As before, the writer code is simpler, so we will examine it first. When the reader arrives, it will wait on the turnstile. If it is not the first writer, subsequent writers will queue up there, but if proceeds then it will wait for the room to be empty. Because the writer has locked the turnstile, no new readers can enter. There may be an arbitrary number of readers currently in the room, but each is there for only a finite amount of time. These existing-readers will be allowed to finish and leave the room. Then the writer gets a turn. When the writer is done, it signals the turnstile, which might unblock a reader or another writer. 
+
+Readers first get to the turnstile, and if they find it is locked, a writer is in its critical section. Thus, readers will queue at the turnstile if necessary, otherwise proceed. After that, the code is the same as we saw before: keep track of the number of readers and signal if the room is empty or not empty.
+
+Does this solution satisfy our goals of avoidance of deadlock and starvation? Starvation is fairly easy to assess: the first attempt at the solution had one scenario leading to starvation and this solution addresses it. Problem solved. You should be able to convince yourself that the solution as described cannot starve the writers or readers.
+
+On to deadlock: the reader code is minimally changed from before; we have identified the turnstile code as not being a problem on its own (though its interactions with other threads need to be examined). The more dangerous block of code is on the side of the writer, because it has that pattern: two waits. If the writer is blocked on the \texttt{roomEmpty} semaphore, no readers or writers could advance past the turnstile and no writers. If the writer is blocked on that semaphore, it means there are readers in the room, and the readers will individually finish and leave (their progress is not impeded). Given that, the room will eventually become empty and the writer will be unblocked.
+
+Note that this solution does not give writers any particular priority: when a writer exits it signals \texttt{turnstile} and that may unblock a reader or a writer. If it unblocks a reader, a whole bunch of readers may enter before the next writer is unblocked and locks the turnstile again. That may or may not be desirable, depending on the application. In any even, it does mean it is possible for readers to proceed even if a writer is queued. If there is a need to give writers priority, there are several techniques for doing so (but we will not examine those right now)~\cite{lbs}.
 
 \subsection*{The Dining Philosophers Problem}
 
-TODO: Describe Problem
+The dining philosophers problem was also proposed by Dijkstra in 1965. The problem can be formulated with $n$ philosophers, but problem is typically described as involving five philosophers. The description that follows is from~\cite{osc}. These five smart individuals spend their lives thinking, but every so often, they need to eat. They share a table, each having his or her own chair. In the centre of the table is a bowl of rice, and the table is laid with five single chopsticks. See the diagram below.
+
+\begin{center}
+\includegraphics[width=0.4\textwidth]{images/philosopher-table.png}\\
+The situation of the dining philosophers~\cite{osc}.
+\end{center}
+
+When a philosopher wishes to eat, she sits down at her designated chair, and attempts to pick up the two chopsticks that are nearest (one on the left, and one on the right). Philosophers are polite and therefore do not grab a chopstick out of the hands of a colleague. When a philosopher has both chopsticks, she may eat rice, and when she is finished, she puts down the chopsticks and goes back to thinking.
+
+Humorous aside: as~\cite{mte241} points out, some textbooks formulate this problem as philosophers needing two forks to eat rather than chopsticks. It is, of course, much easier to imagine having difficulty eating with only one chopstick than having difficulty with only one fork. Of course, the scenario is a little bit silly. We don't study it because it is supposed to be a true to life model of how real philosophers behave. The scenario is just a convenient and memorable example of a whole class of problems.
+
+Suppose then that semaphores are the method for managing things. Because only one person can be in possession of a chopstick at a time, each chopstick may be represented by a binary semaphore. As a philosopher needs the chopstick to his left and right to eat, when the philosopher sits down he attempts to acquire the left chopstick, then the right, eats, and puts the chopsticks down. This works fine, until all philosophers sit down at the same time. Each grabs the chopstick to his or her left. None of them are able to acquire the chopstick to his or her right (because someone has already picked it up). None of the philosophers can eat; they are all stuck. This is deadlock. 
 
 This example makes it more clear why we call a situation where a thread never gets to run ``starvation''. If a philosopher is never able to get both chopsticks, that philosopher will never be able to eat, and though I am not an expert on biology, I have it on good authority that people who do not eat anything end up eventually starving to death. Even philosophers.
+
+One thing that would guarantee that this problem does not occur is to protect the table with a binary semaphore. This would allow exactly one philosopher at a time to eat, but at the very least, deadlock and starvation would be avoided. Although this works, it is a suboptimal solution. There are five seats and five chopsticks and yet only one person is eating at a time. We can get better concurrency and use of the resources.
+
+Next idea: what if we limit the number of philosophers at the table concurrently to four? The pigeonhole principle applies here: if there are $k$ pigeonholes and more than $k$ pigeons, at least one pigeonhole must have at least two pigeons. Thus, at least one of the four philosophers can get two chopsticks~\cite{mte241}. Implementing the solution is easy; we have a general semaphore with a maximum and initial value of 4.
+
+Another idea: the problem above occurs because every philosopher tries to pick up the left chopstick first. If some of them try to pick up the left and some pick up the right first, then deadlock will not happen, either~\cite{osc}.
+
+The dining philosophers problem is a good springboard from which to launch into a much deeper discussion of deadlock, and starvation; that is what we will examine next.
 
 \input{bibliography.tex}
 
