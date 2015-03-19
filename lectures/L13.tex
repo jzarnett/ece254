@@ -6,7 +6,7 @@
 
 \section*{Synchronization Patterns}
 
-There are a number of common synchronization patterns that occur commonly and we can use semaphores to solve them. These synchronization patters are ways of co-ordinating two threads or processes. We have already examined serialization and mutual exclusion, but there are many more. Throughout this section we will use pseudocode and something like ``Statement A1'' could be any valid statement in the program; what exactly it does is not important as the semaphore is a general solution. The examples in this section come from~\cite{lbs}.
+There are a number of common synchronization patterns that occur frequently and we can use semaphores to solve them. These synchronization patterns are ways of co-ordinating two threads or processes. We have already examined serialization and mutual exclusion, but there are many more. Throughout this section we will use pseudocode and something like ``Statement A1'' could be any valid statement in the program; what exactly it does is not important as the semaphore is a general solution. The examples in this section come from~\cite{lbs}.
 
 \subsection*{Signalling}
 Recall from earlier the example with Alice and Bob at the power plant. This was signalling: Bob sends a signal to Alice to indicate that he has arrived to work and Alice may go home. Signalling can be used in general as a way of indicating that something has happened. Suppose we have a semaphore named \texttt{sem}, initialized to 0.
@@ -28,7 +28,7 @@ Recall from earlier the example with Alice and Bob at the power plant. This was 
 
 If $B$ gets to the \texttt{wait} statement first, it will be blocked (as the semaphore is 0) and cannot proceed until someone signals on that semaphore. When $A$ does call \texttt{signal}, then $B$ may proceed. If instead $A$ gets to the \texttt{signal} statement first, it will signal and the semaphore value will be 1. Then, when $B$ gets to the \texttt{wait} statement, it can proceed without delay. Regardless of the actual order that the threads run, we are certain that statement A1 will execute before statement B2.
 
-Note that this is an situation where it makes sense for a thread to signal a semaphore even if it is not the thread that waited on that semaphore. Thus, sometimes, the semaphore is appropriate and the mutex structure is not necessary in every circumstance.
+Note that this is a situation where it makes sense for a thread to signal a semaphore even if it is not the thread that waited on that semaphore. Thus, sometimes, the semaphore is appropriate and the mutex structure is not necessary in every circumstance.
 
 \subsection*{Rendezvous}
 The rendezvous is an expansion of the signal pattern so that it works both ways: two threads should be at the same point before either of them may proceed (they ``meet up''). Given the following code:

@@ -98,7 +98,7 @@ A sample resource allocation graph with a cycle, but no deadlock~\cite{osc}.
 
 In this case, $P_{4}$ and $P_{2}$ are not part of the cycle and when they release their held resources, the other two processes will be able to proceed.
 
-\subsection*{Dealing with Deadlock}
+\section*{Dealing with Deadlock}
 
 There are four basic approaches to dealing with deadlock, each of which we will examine in turn.
 \begin{enumerate}
@@ -108,12 +108,12 @@ There are four basic approaches to dealing with deadlock, each of which we will 
 	\item Deadlock detection.
 \end{enumerate}
 
-\subsubsection*{Deadlock Option 1: Ignore it}
+\subsection*{Deadlock Option 1: Ignore it}
 This option is certainly convenient for operating system designers: we simply pretend that deadlock can never happen, or if it does happen, it is the application developers' fault. While it is tempting and easy to just define a problem as being nothing we need to deal with, that's unrealistic in reality. That said, this is the approach taken in Microsoft Windows, so it is a valid option. If two processes get deadlocked, the user may simply see no progress (or the ``not responding'' dialog) and have to open task manager and start killing processes.
 
 Setting aside the ``do-nothing'' option, let us move on to some approaches that actually deal with the problem.
 
-\subsubsection*{Deadlock Option 2: Deadlock Prevention}
+\subsection*{Deadlock Option 2: Deadlock Prevention}
 
 This approach is a way of preventing a deadlock from being possible. The first three conditions for deadlock (mutual exclusion, hold and wait, and no preemption) are all necessary for deadlock to be possible. If we eliminate one of these three pillars, deadlock is not possible and it is prevented from happening.
 
