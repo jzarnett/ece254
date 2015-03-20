@@ -1,0 +1,37 @@
+\input{header.tex}
+
+\begin{document}
+
+\lecture{ 17 --- Deadlock Detection \& Recovery }{\term}{Jeff Zarnett}
+
+\section*{Deadlock Detection}
+Thus far we have examined several ways to prevent or avoid deadlock, but all of those solutions have come with significant drawbacks or limitations. Avoidance analyses are also conservative; they will prevent a request from taking place if there is even a small chance it could lead to a deadlock. If we cannot stop deadlock from happening or cannot live with the performance reduction that avoidance mandates, then perhaps the next best thing is to let all resource requests proceed and then determine later if a deadlock exists, and if so, do something about it.
+
+\section*{Deadlock Recovery}
+Once a deadlock has been detected, a system can recover from that deadlock by ``breaking'' the deadlock. There are several strategies that we could apply, which we will refer to in humorous terms as:
+
+\begin{itemize}
+	\item Robbery
+	\item Murder
+	\item Mass Murder
+	\item Time travel; and
+	\item Armageddon.
+\end{itemize}
+
+\subsection*{Robbery}
+
+\subsection*{Murder}
+
+\subsection*{Mass Murder}
+
+\subsection*{Time Travel}
+
+\subsection*{Armageddon}
+
+\subsection*{Miscarriages of Justice}
+It turns out that our deadlock detection algorithms do not have to be perfect if we have chosen an appropriate recovery strategy. 
+
+
+\input{bibliography.tex}
+
+\end{document}
