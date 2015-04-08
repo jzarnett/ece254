@@ -2,7 +2,7 @@
 
 \begin{document}
 
-\lecture{ 18 --- Concurrency \& Synchronization in UNIX }{\term}{Jeff Zarnett}
+\lecture{ 18 --- Concurrency \& Synchronization in POSIX }{\term}{Jeff Zarnett}
 
 \section*{Concurrency with pthreads}
 
@@ -160,7 +160,7 @@ public void exampleMethod() {
 
 This sort of ``automatic'' locking and releasing is intended to simplify the process of writing multithreaded code and abstract away the details of mutual exclusion.
 
-\section*{Concurrency Mechanisms in UNIX-Like Systems}
+\section*{Concurrency Mechanisms in UNIX}
 
 We have already mentioned the idea of pipes, shared memory, and signals as ways of having inter-process (or inter-thread) communication in UNIX. UNIX also has semaphores (not just in the pthreads). The semaphore in UNIX is a general semaphore, and maintains a few pieces of extra data~\cite{osi}:
 \begin{itemize}
@@ -182,14 +182,77 @@ UNIX semaphores are technically created in sets of one or more. It is possible t
 
 In addition to the standard UNIX concurrency mechanisms, Linux has concurrency mechanisms all its own, to provide concurrency in execution of kernel code. 
 
-Atomic operations
+\paragraph{Atomic Operations.} The Linux kernel provides operations that are guaranteed to execute atomically, to avoid simple race conditions. In a uniprocessor system, the CPU cannot be interrupted until the operation is finished; in a multiprocessor system, the variable is locked until the operation is finished. There are two types of atomic operations: those that operate on integers and those that operate on a single bit in a bitmap. On some architectures, the atomic operations are translated into uninterruptible assembly instructions; on others, the memory bus is locked to ensure the operation is atomic~\cite{osi}.
 
-Spinlocks
+Rather than just using an integer for atomic integer operations, there is a defined type \texttt{atomic\_t}, ensuring that only atomic operations can be used on this data type and that atomic operations can only be used on that data type. This prevents programming errors and hides architecture-specific implementation details.
 
-Semaphores
+The following table gives an overview of the atomic integer and bitmap operations, from~\cite{lkd}:
 
-Barriers
+\begin{center}
+\begin{tabular}{l|l}
+	\textbf{Function} & \textbf{Description}\\\hline
 
+	\texttt{ATOMIC\_INIT( int i )} & At declaration, initialize an \texttt{atomic\_t} to \texttt{i}\\\hline
+
+\texttt{int atomic\_read( atomic\_t *v )} &  Read the integer value of \texttt{v}\\\hline
+
+\texttt{void atomic\_set( atomic\_t *v, int i )} & Set \texttt{v} equal to \texttt{i}\\\hline
+
+\texttt{void atomic\_add( int i, atomic\_t *v )} & Add \texttt{i} to \texttt{v}\\\hline
+
+\texttt{void atomic\_sub( int i, atomic\_t *v )} & Subtract \texttt{i} from \texttt{v}\\\hline
+
+\texttt{void atomic\_inc( atomic\_t *v )} & Add 1 to \texttt{v}\\\hline
+
+\texttt{void atomic\_dec( atomic\_t *v )} & Subtract 1 from \texttt{v}\\\hline
+
+\texttt{int atomic\_sub\_and\_test( int i, atomic\_t *v )} & Subtract \texttt{i} from \texttt{v}; return true if 0; otherwise false\\\hline
+
+\texttt{int atomic\_add\_negative( int i, atomic\_t *v )} & Add \texttt{i} to \texttt{v}; return true if negative; otherwise false\\\hline
+
+\texttt{int atomic\_dec\_and\_test( atomic\_t *v )} & Decrement \texttt{v} by 1; return true if 0; otherwise false\\\hline
+
+\texttt{int atomic\_inc\_and\_test( atomic\_t *v )} & Increment \texttt{v} by 1; return true if 0; otherwise false\\ \hline\hline
+
+\texttt{void set\_bit( int n, void *addr )} &  Set the $n^{th}$ bit starting from \texttt{addr}\\\hline
+
+\texttt{void clear\_bit( int n, void *addr )} &  Clear the $n^{th}$ bit starting from \texttt{addr}\\\hline
+
+\texttt{void change\_bit( int n, void *addr )} &  Flip the value of the $n^{th}$ bit starting from \texttt{addr}\\\hline
+
+\texttt{int test\_and\_set\_bit( int n, void *addr )} &  Set $n^{th}$ bit starting from \texttt{addr}; return previous value\\\hline
+
+\texttt{int test\_and\_clear\_bit( int n, void *addr )} &  Clear $n^{th}$ bit starting from \texttt{addr}; return previous value\\\hline
+
+\texttt{int test\_and\_change\_bit( int n, void *addr )} &  Flip $n^{th}$ bit starting from \texttt{addr}; return previous value\\\hline
+
+\texttt{int test\_bit( int n, void *addr )} &  Return value of $n^{th}$ bit starting from \texttt{addr}\\\hline
+
+\end{tabular}
+\end{center}
+
+\paragraph{Spinlocks.}
+Another common technique for protecting a critical section in Linux is the \textit{spinlock}. This is a handy way to implement constant checking to acquire a lock. Unlike semaphores where the process is blocked if it fails to acquire the lock, a thread will constantly try to acquire the lock. The implementation is an integer that is checked by a thread; if the value is 0, the thread can lock it (set the value to 1) and continue; if it is nonzero, it constantly checks the value until the value becomes 0. As you know, this is very inefficient; it would be better to let another thread execute, except in the circumstances where the amount of time waiting on the lock might be less than it would take to block the process, switch to another, and unblock it when the value changes~\cite{osi}.
+
+\begin{verbatim}
+spin_lock( &lock )
+    /* Critical Section */
+spin_unlock( & lock )
+\end{verbatim}
+
+In addition to the regular spinlock, there are \textit{reader-writer-spinlocks}. Like the readers-writers problem discussed earlier, the goal is to allow multiple readers but give exclusive access to a writer. This is implemented as a 24-bit reader counter and an unlock flag, with the meaning defined as follows~\cite{osi}.
+
+\begin{center}
+\begin{tabular}{l|l|l}
+	\textbf{Counter} & \textbf{Flag} & \textbf{Interpretation}\\\hline
+	0 & 1 & The spinlock is released and available. \\
+	0 & 0 & The spinlock has been acquired for writing.\\
+	$n$ ($n > 0$) & 0 & The spin lock has been acquired for reading by $n$ threads.\\
+	$n$ ($n > 0$) & 0 & Invalid state.\\
+\end{tabular}
+\end{center}
+
+There are further additional details related to use of spinlocks, which can of course be explored by reading the Linux kernel documentation.
 
 
 \input{bibliography.tex}
