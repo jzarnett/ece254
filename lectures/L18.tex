@@ -248,7 +248,7 @@ In addition to the regular spinlock, there are \textit{reader-writer-spinlocks}.
 	0 & 1 & The spinlock is released and available. \\
 	0 & 0 & The spinlock has been acquired for writing.\\
 	$n$ ($n > 0$) & 0 & The spin lock has been acquired for reading by $n$ threads.\\
-	$n$ ($n > 0$) & 0 & Invalid state.\\
+	$n$ ($n > 0$) & 1 & Invalid state.\\
 \end{tabular}
 \end{center}
 

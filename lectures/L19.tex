@@ -1,0 +1,24 @@
+\input{header.tex}
+
+\begin{document}
+
+\lecture{ 19 --- Memory }{\term}{Jeff Zarnett}
+
+\section*{Main Memory}
+
+Like the CPU, main memory is a resource that needs to be shared between multiple processes. The way programs are written, application developers behave as if (1) main memory is unlimited, and (2) all of main memory is at the program's disposal. Simple logic tells us that application developers are wrong: an infinite amount of data storage would require an infinite amount of physical space. Memory space is limited to the physical amount of RAM in the machine, which is a function of how much money you spend when purchasing it. Even so, why is it that program developers pretend that memory is infinite and unshared when it is not? 
+
+Certainly compared to the early days of computing, the amount of memory available is huge. The Commodore~64, introduced in 1982, had a whopping 64~KB of memory\footnote{ And now you know why it was called the Commodore~\textbf{64}.}. A 4-byte (32-bit) integer was a significant fraction of memory, and application developers had to scrimp and save to avoid wasting even a single integer's worth of memory. This historical reason is why languages like C and Java support types like \texttt{short} even though you have probably never used them outside of a programming exercise or examination.  In the meantime, memory has jumped up to 8 or 16~GB. Remember that 1~GB is 1024~MB and 1~MB is 1024~KB. Now think about the fact that we still use 32-bit integers. If a thousand integers were wasted unnecessarily, would anyone notice or care? This makes the problem better by ``kicking the can down the road'' -- we can use a lot more memory before we are in danger of running out, but it's still possible to run out. Furthermore, even though memory might be big enough for every process to have its own area, that would not work if every developer assumes memory is unshared. So we still have not solved the mystery of why application developers can be oblivious to the realities of main memory.
+
+The answer is that most modern operating systems manage the shared resource of memory for them. This was not always the case, and applications used to be responsible for managing all of memory. It was also not so long ago that there were various third party programs to let the user do some memory management, too. Around the time of the last versions of MS-DOS and Windows 95, there were products like QEMM 8 that you could use to move programs around in memory. But you're not here to hear old war stories about moving parts of Windows into high memory so that TIE Fighter would run.  One of the major objectives of the operating system is to manage shared resources, and that is exactly what main memory is. 
+
+We will now examine several strategies for managing and abstracting the details of memory.
+
+\subsection*{No Memory Abstraction}
+The simplest way to manage memory is, well, not to manage memory at all. Early mainframe computers and even personal computers into the 1980s had no memory management at all. Programs would just operate directly on memory addresses. Memory is viewed as a linear array with addresses starting at 0 and going up to some maximum limit (e.g., 65535) depending on the physical hardware of the machine. The section of memory that is program-accessible depended a lot on the operating system, if any, and other things needed (e.g., the BASIC compiler). So to write a program, we need to know the ``start'' address (the first free location after the OS, drivers, compiler and all that) and the ``end'' address, the last available address of memory. These would differ from machine to machine, making it that much harder to write a program that ran on different computers.
+
+A program executed an instruction directly on a memory address, such as writing 0 into memory location 1024. Suppose you wanted to have two programs running at the same time. Immediately, a problem springs to mind: if the first program writes to address 3850, and the second program writes to address 3850, the second program overwrote the first program's changes and it will probably result in errors or a crash. Alternatively, if programs are aware of one another, the first program can use memory locations less than, say, 2048 and the second uses memory locations above 2048. This level of co-ordination gets more and more difficult as more and more programs are introduced to the system and is next to impossible if we do not control all the programs to execute concurrently.
+
+\input{bibliography.tex}
+
+\end{document}
