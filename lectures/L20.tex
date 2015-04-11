@@ -24,7 +24,7 @@ With the preliminaries about memory allocation out of the way, now it is time to
 \subsection*{Fixed Block Sizes}
 One possibility for how to allocate memory is in fixed block sizes. All blocks of memory allocated are the same size. This does not mean that requests are not of varying size, it just means that all blocks allocated are the same size. If a request comes in for 1 byte, 1 block is allocated. If a request comes in that is, say, 1.5 blocks, 2 blocks are allocated. 
 
-It is immediately obvious when we look at this that some memory is ``wasted''. If 1.5 blocks are requested and 2 blocks are allocated and returned, we are using up an extra 0.5 blocks. This space cannot be used for anything useful (as it shows as allocated). This is a problem called \texttt{internal fragmentation} -- unused memory that is internal to a partition. This is obviously going to occur often when fixed block sizes are used, and the bigger each block is, the more memory will be wasted in internal fragmentation. 
+It is immediately obvious when we look at this that some memory is ``wasted''. If 1.5 blocks are requested and 2 blocks are allocated and returned, we are using up an extra 0.5 blocks. This space cannot be used for anything useful (as it shows as allocated). This is a problem called \textit{internal fragmentation} -- unused memory that is internal to a partition. This is obviously going to occur often when fixed block sizes are used, and the bigger each block is, the more memory will be wasted in internal fragmentation. 
 
 \paragraph{One Size of Blocks.} Suppose the system has only one size of blocks, perhaps, 1~KB. To implement this strategy, divide up memory into blocks of this fixed size and maintain a linked list of addresses of all currently available blocks. When a block is allocated, remove its corresponding node from the linked list; when a block is freed, put a node with that address into the linked list. If the list is empty, a memory request cannot be satisfied, and null will be returned. This is definitely fast as we can allocate memory in $\Theta(1)$ time~\cite{mte241}.
 
@@ -38,7 +38,40 @@ To a certain extent, variable block sizes are not that different from fixed bloc
 \paragraph{Bitmaps.} It is possible to divide memory into $M$ units of $n$ bits, and then to create a bit array of size $M$ storing the status of each of those units. If a bit $m$ in $M$ is 0, it means that unit is unallocated; if it is 1 then that unit is allocated. How much memory is lost to this overhead? $100/(n+1)$\% of the memory is used. If a unit is 4 bytes, the bitmap is about 3\% of memory; if it is 16 bytes the bitmap takes about 0.8\% of memory. Finding a block of $k$ bytes requires searching the bitmap for a run of $\frac{8m}{n}$ zeros~\cite{mte241}.
 
 \paragraph{Linked Lists.}
-The other approach, as in the case of fixed size blocks, is to use linked lists. The information of the linked list can be stored separately from all memory allocation or as part of the block of memory. Either approach is workable. 
+The other approach, as in the case of fixed size blocks, is to use linked lists. The information of the linked list can be stored separately from all memory allocation or as part of the block of memory. Either approach is workable.
+
+After startup, the linked list contains one entry, as all available memory is in one contiguous block. When a memory request is allocated, for example, to allocate 128 bytes, the block is divided up. Suppose we allocate the first 128 bytes. A new entry is placed in the list, at 128 bytes. The node that is added contains the start address, the length of the block, and a bit indicating it is allocated. The unallocated block's node will contain the updated entry: smaller size, new start address, and the bit indicating it is unallocated. When a block is deallocated, we simply find that block in the linked list and set the bit to zero to indicate it is now available again.
+
+In a typical system there may be a lot of allocation and deallocation of memory. This will probably lead to breaking memory up into smaller pieces. We may end up with a situation where the free blocks are small and spread out, as in the figure below: 
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{images/checkerboard.png}\\
+Allocated blocks in memory after some time; the ``checkerboard'' situation~\cite{mte241}.
+\end{center}
+
+If this happens, it may be that there is a contiguous block of free memory available of size $N$, but this request cannot be fulfilled because the memory is logically split up into smaller pieces. To solve this, we need a way to recombine the split blocks, commonly called \textit{coalescence}. See the updated figure below:
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{images/checkerboard-coalesced.png}\\
+The ``checkerboard'' situation with the adjacent free blocks coalesced~\cite{mte241}.
+\end{center}
+
+\paragraph{Coalescence.} Coalescence is just the process or merging two (or more) adjacent free blocks into one larger block. It also makes sense that dividing memory should be a reversible operation. This solves the problem of a block of $N$ contiguous bytes being unable to be allocated. Coalescence can be done periodically or whenever a block of memory is freed.
+
+As pointed out in~\cite{mte241}, coalescence makes it a good idea to maintain the memory blocks in a doubly-linked list. Recall a linked list has ``next'' pointers connecting the nodes and a doubly-linked list has ``next'' and ``previous'' pointers, to make it easier to traverse the list in both directions. When a block is freed, it may be in the middle of two free blocks, so it is convenient to have previous and next pointers so the adjacent sections can be merged efficiently.
+
+Even with coalescence, we may have the problem that $N$ free bytes exist in the system but spread out over many little pieces, so the request for $N$ cannot be satisfied. When free memory is spread into little tiny fragments, this situation is called \textit{external fragmentation}. It is analogous to internal fragmentation in that there are little bits of space that cannot be used for anything useful, except of course that they are not inside any block (hence external).
+
+\paragraph{External Fragmentation.}
+One way to reduce external fragmentation is to increase internal fragmentation. If a request for $N$ bytes comes in and there is a block of $N+k$ available, where $k$ is very small (and unlikely to be allocated on its own), it makes sense to allocate the whole $N+k$ block for the request and just accept that $k$ bytes are lost to internal fragmentation. For example, if a free block contains 128 bytes and the request is for 120 bytes, it may not be worth the hassle and overhead to split this block into 120 and 8, as it is unlikely the 8 bytes will be filled anyway. Some systems round up memory allocations to the nearest power of 2 (e.g., a request for 28 bytes gets moved up to 32). Of course, this does not really help with satisfying the request for $N$ bytes of memory; it just keeps external fragmentation down.
+
+Another idea is \textit{compaction}, which can also be thought of as \textit{relocation}. The goal is simply to move the allocated sections of memory next to one another in main memory, allowing for a large contiguous block of free space. This is a very expensive operation; to do this successfully, the Java runtime, for example, must ``stop the world'' (halt all program execution) while it reorganizes memory. This tends to make Java unsuitable for use in writing a real-time operating system. But even if we are willing to pay the cost, it might not be possible to do.
+
+In previous discussions of memory management from the perspective of the application developer, languages with garbage collection like Java or C\# may do memory compaction as needed when the garbage collector runs. This can work in such languages, because variables are references and unless you are writing an \texttt{unsafe} block in C\#, references can be moved around in memory at the garbage collector or runtime's convenience; all it needs to do is update every reference. This is not the case in languages like C where we operate directly on memory addresses, and thanks to things like pointer arithmetic and using integer variables as addresses, there is no reliable way to update all references. 
+
+The final way we can try to prevent or deal with external fragmentation is through different allocation strategies; that is, how to fit a memory request to a block of free memory. We will examine those strategies now.
+
+\subsubsection*{Variable Allocation Strategies}
 
 \input{bibliography.tex}
 
