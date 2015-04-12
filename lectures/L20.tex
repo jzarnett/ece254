@@ -73,6 +73,69 @@ The final way we can try to prevent or deal with external fragmentation is throu
 
 \subsubsection*{Variable Allocation Strategies}
 
+Given a memory request of $N$, where do we allocate the memory? If there is no block of at least size $N$, the request cannot be satisfied. If there is only one, the decision is easy. As long as memory has two free blocks of sufficient size ($N$ or more) that cannot be coalesced, a memory allocation request will require making a decision about which of those blocks to split to meet the allocation request. There are five strategies we will examine~\cite{mte241}:
+
+\begin{enumerate}
+	\item First fit.
+	\item Next fit.
+	\item Best fit.
+	\item Worst fit.
+	\item Quick fit.
+\end{enumerate}
+
+As a performance optimization, we could have two linked lists: one for allocated memory and one for unallocated memory. That way to find a free block we do not have to look through the allocated blocks.
+
+\paragraph{First fit.} The strategy of first fit is to start looking at the beginning of memory, and check each block. If the block is of sufficient size, split it to allocate the memory, and return the balance to the unallocated memory list. This algorithm has a runtime of $O(n)$ where $n$ is the number of blocks. This algorithm is simple to implement. 
+
+\paragraph{Next fit.} This strategy is a modification of the first-fit algorithm. Instead of starting at the beginning of memory and finding the first block that meets the request, keep track of where the last block was allocated, and then start the next search after that. This prevents the situation where there are a lot of small unallocated blocks (external fragmentation) all concentrated at the start of memory~\cite{mte241}. The runtime is still $O(n)$, as with first fit.
+
+\paragraph{Best fit.}
+Instead of just walking through the list and splitting up the first block equal to or larger than $N$, we could instead try to make a more intelligent decision. Considering all blocks, we choose the smallest block that is at least as big as $N$. This produces the smallest remaining unallocated space at the end. 
+
+This would require either (1) checking every available block ($\Theta(n)$ runtime); or (2) keeping the blocks sorted by increasing size ($O(n)$ runtime). If we use an AVL tree or red-black tree, then we can get best fit to run in $\Theta($ln$(n))$, possibly better runtime than first fit~\cite{mte241}.
+
+
+\paragraph{Worst fit.}
+The problem with best fit is that the leftover bits of memory are likely to be too small to be useful. Rather than trying to find the smallest block that is of size $N$ or greater, choose the largest block of free memory. When the block is split, the remaining free block is, hopefully, large enough to be useful. 
+
+As with best fit, we must either (1) check each available block; or (2) keep the block sorted by size, though decreasing size this time. A max heap is appropriate, or a binomial or Fibonacci heap could also be appropriate~\cite{mte241}.
+
+\paragraph{Quick fit.}
+Though not a solution on its own, quick fit is an optimization. If memory requests of a certain size are known to be common, e.g., requests for 1~MB, it might be ideal to keep a separate list of blocks that are of perhaps 1-1.1~MB in size, so that if the request for 1~MB does come in, it can be satisfied immediately and quickly. 
+
+
+
+\paragraph{Example: 16~MB Allocation.} The diagram below illustrates where in memory a request of 16~MB may be placed:
+
+\begin{center}
+\includegraphics[width=0.50\textwidth]{images/first-best-next.png}\\
+An example of where the first, best, and next fit algorithms would place an allocation~\cite{osi}.
+\end{center}
+
+The worst fit algorithm is not shown, but it would overlap with the placement indicated for next fit, because the largest block of free space before the allocation is is 36M.
+
+\subsubsection*{Choosing a Strategy}
+
+According to~\cite{osc}, simulations show that worst fit performs, well, worst in terms of time required to fulfill an allocation request and that it results in the most wasted space. First (next) and best fit are about equal in how well they utilize memory, but first fit tends to be faster. Despite this, even with optimization, given $x$ allocated blocks, another 0.5$x$ blocks may be lost to fragmentation.
+
+This is supported by~\cite{osi}, whose analysis also indicates that first fit is the fastest and best algorithm. The next fit algorithm tends to do allocations at the end of memory, so the largest block of free memory (typically at the end) is quickly broken up. On the other hand, first fit tends to litter the beginning of memory with small fragments. Best fit tends to produce free blocks that are too small to be useful. 
+
+\subsubsection*{Advanced Strategy: Binary Buddy}
+Now let us examine a compromise between fixed and variable allocation, as laid out in~\cite{osi}. There is some internal fragmentation, but it is a trade-off against how much external fragmentation we are willing to accept.
+
+In a buddy system, memory blocks are available in powers of 2. More formally, a block is of size $2^{K}$, where $L \leq K \leq U$ and $2^{L}$ is the smallest block size that can be allocated and $2^{U}$ is the largest block size that can be allocated (usually the full size of memory). 
+
+Initially, memory is treated as a single block of size $2^{U}$. If a request of size $n$ occurs such that $2^{U-1} \leq n \leq 2^{U}$, then the entire block is allocated. Otherwise, the block is split into two ``buddies'', of size $2^{U-1}$. If $2^{U-2} \leq n \leq 2^{U-1}$, allocate one of the blocks of $2^{U-1}$ to the request. Otherwise, subdivide again. Repeat until the smallest block greater than or equal to $n$ is allocated. 
+
+In subsequent allocations, we look through the data structure, typically a tree, to find either (1) a block of appropriate size; or (2) a block that can be subdivided to meet the allocation. Whenever a pair of buddies (two blocks of equal size, split from the same ``parent'') in the list are both free, they can be coalesced.
+
+Consider the example below where a 1~MB block is allocated using the Binary Buddy system.
+
+\begin{center}
+\includegraphics[width=0.80\textwidth]{images/binary-buddy.png}\\
+An example of the Binary Buddy system for memory allocation~\cite{osi}.
+\end{center}
+
 \input{bibliography.tex}
 
 \end{document}
