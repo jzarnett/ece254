@@ -43,7 +43,7 @@ Imagine, as an analogy, a simple picture frame. The frame may be empty or it may
 
 When a process starts, it is loaded into memory, and has some initial memory requirements (e.g., the stack and global variables), so it will require some number of pages. The number of pages can and will change over time as memory is allocated and freed. A process may also be swapped out to disk, but to run it will need to be swapped back in. Either way, a process will take up a certain number of pages in memory at any given time.
 
-Pages provide the benefit of separating the logical address from the physical address: programmers may pretend the address space of the computer is $2^{64}$ bytes rather than however many GB of memory are in the physical machine. Any pages that do not fit into frames right now can be kept in a secondary storage medium (that is, on disk) until they are swapped in. 
+Pages provide the benefit of separating the logical address from the physical address: programmers may pretend the address space of the computer is $2^{64}$ bytes rather than however many GB of memory are in the physical machine. 
 
 Consider the diagram below, in which there are 15 free frames initially. Then we load process $A$, which consists of 4 frames; then process $B$ with 3 frames, $C$ with another 3 frames. Eventually, $B$ is swapped out (put back on disk) and $D$ is loaded. Process $D$ has five frames, but the frames do not have to be contiguous (and although they are shown in order, they do not necessarily have to be).
 
@@ -80,12 +80,54 @@ We also get protection in this scheme: a program cannot access any address outsi
 
 The operating system, however, can manage memory of all processes, so it will need another scheme. The OS will operate on the \textit{frame table}, a listing of all the frames, indicating which page of which process a frame currently holds, if any.
 
+\subsection*{Shared Pages}
+
+Another great advantage of paging is the possibility of sharing of common code. Users very often have multiple programs open; and sometimes they are duplicates (e.g., notepad, Microsoft Word, et cetera). In a multiuser system, different users may have some of the same program open (e.g., Skype, Firefox, et cetera). We could reduce memory consumption if common parts of this program are shared between all instances of that program.
+
+Example: consider the text editor \texttt{vi}. Imagine there are 5 users on the system, each of whom wants to use \texttt{vi}. Let's say the program itself uses 10 pages (made up number) on its own, and then some variable number of pages based on what file is being edited. Without sharing, each copy of \texttt{vi} that runs will consume 10 pages, so 50 pages are being used for the executable. If we can share those 10 pages, we have saved 40 pages worth of memory space.
+
+Other programs and code can easily be shared, such as compilers, libraries, and operating system utilities. In fact, any code can be shared as long as it is \textit{reentrant} (also sometimes called pure or stateless). This is code that does not change when it is executed. That means there is no state maintained by the code. Any function that accesses a global or static variable is non-reentrant, such as~\cite{mte241}:
+
+\begin{verbatim}
+int tmp;void swap( int *x, int *y ) {  tmp = *x;  *x = *y;  *y = tmp; 
+}
+\end{verbatim}
+
+\subsection*{Page Table Structure}
+In the simplest form, the page table is just a standard table. This structure is simple, but page tables can be very large. If the system is 32-bit, and page sizes are 4~KB ($2^{12}$), then the page table has $2^{32}/2^{12} = 2^{20}$ pages, or about 1 million entries. Given that page tables themselves can be quite large, we will examine three strategies for how to structure the page table, other than the simple table structure:
+
+\begin{enumerate}
+	\item Hierarchical paging.
+	\item Hashed page tables.
+	\item Inverted page tables.
+\end{enumerate}
+
+\paragraph{Hierarchical Paging.}
+Rather than have one big table, we have multiple levels in the page table; this means the page table can be broken up and need not be contiguous in memory. Suppose we have a two level system. If the page number is $p$, the first $k$ bits indicate the \textit{outer page}. The outer page then contains some information about where the \textit{inner pages} are. The remaining $p-k$ bits identify the inner page. After the inner page is identified, the displacement $d$ is then calculated from the inner page~\cite{osc}.
+
+\paragraph{Hashed Page Tables.} 
+Instead of the page table being an array of entries, instead, turn it into a hash table. There is a hash function to assign pages to ``buckets'' and each bucket is implemented as a linked list. Then each element of the list is examined to find the matching page.
+
+\paragraph{Inverted Page Tables.} 
+For 32-bit virtual addresses, a multilevel page table can work. But with 64-bit computers, with 4~KB pages, the page table requires $2^{52}$ entries, and if an entry is 8 bytes, then the table is over 30 million gigabytes (30~PB). Using this much memory for the page table is unrealistic. Instead, we can have an inverted page table: there is one entry per frame, rather than one entry per page. The entry keeps track of the process and page number. This saves a huge amount of space (1~GB of ram with a 4~KB page size means the page table requires only $2^{18}$ entries). The drawback is that it is no longer possible find a physical page by looking at the address; instead, we must search the entire inverted page table. Slow s this operation is, we can make it faster via hardware...~\cite{mos}.
+
 \subsection*{Paging: Hardware Support}
 As we have repeatedly discussed, memory accesses are very frequent and often require additions and comparisons. After all, an operation as simple as adding two numbers requires fetching the add instruction, fetching the operands, and storing the result. To prevent abysmal performance, modern computers have hardware support, because hardware is much, much faster than doing these operations in software.
 
-The simplest implementation of the page table is to use a set of dedicated registers. Registers are the fastest form of storage. When a process switch takes place, these registers, just as all other registers, are replaced with those of the process to run. The PDP-11 was an example of a system that had this architecture. Addresses were 16 bits and the page size was 8~KB. Yes, it was a very long time ago. The page table was therefore 8 entries and kept in fast registers. This might work if the number of entries in the page table is small (something like 256 entries). The page table can easily however, be something like 1 million entries, so it would be a little bit expensive to have that many registers. Instead, the page table is kept in main memory and a single register is used to point to the page table~\cite{osc}.
+The simplest implementation of the page table is to use a set of dedicated registers. Registers are the fastest form of storage. When a process switch takes place, these registers, just as all other registers, are replaced with those of the process to run. The PDP-11 was an example of a system that had this architecture. Addresses were 16 bits and the page size was 8~KB. Yes, it was a very long time ago. The page table was therefore 8 entries and kept in fast registers. This might work if the number of entries in the page table is small (something like 256 entries). The page table can easily be something like 1 million entries, so it would be a little bit expensive to have that many registers. Instead, the page table is kept in main memory and a single register is used to point to the page table~\cite{osc}.
 
 Unfortunately, this solution comes with a big catch. To access a page from memory, we need to first figure out where it is, so that requires accessing the page table in main memory. Then after retrieving that, we can look in the page table to find the frame where the desired page is stored. Then we can access that page. So two memory accesses are required for every read or write operation. Remember that as far as the CPU is concerned, main memory already moves at a snail's pace. Doubling the amount of time it takes to do a read or write means it takes roughly forever. Thus, we will need to find a way to speed this up.
+
+Surprise surprise, the solution is hardware: a fast cache called the \textit{translation lookaside buffer} (TLB). You can think of the TLB as a key-value pair (think HashMap). The key is the logical address and the value is the physical address. To make the search fast, the comparison is done on all items simultaneously. To prevent this from being extremely expensive, the size of the TLB is limited; it's usually something around 32 to 1024 entries in size. Systems have evolved from having no TLBs to having multiple levels, over time~\cite{osc}.
+
+When a memory read or write is issued, the page number is checked against the TLB. If it is found in the TLB then the frame number risk immediately known. If the page number is not found in the TLB, this is what we call a \textit{TLB miss} and we must look in the full page table, which unfortunately is slower because it requires reading from memory. See the diagram below:
+
+\begin{center}
+\includegraphics[width=0.65\textwidth]{images/tlb-hardware.png}\\
+Mapping of logical memory to physical memory via the page table~\cite{osc}.
+\end{center}
+
+The TLB idea is a specific instance of the strategy of caching. Much earlier, when talking about the basics of computer hardware, we mentioned that memory comes at different levels and and different speeds. Caching is a critical idea in computers and operating systems. In fact, caching is such an important topic, that it will be the next topic examined.
 
 \input{bibliography.tex}
 
