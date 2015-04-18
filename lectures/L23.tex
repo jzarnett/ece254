@@ -4,6 +4,66 @@
 
 \lecture{ 23 --- Virtual Memory }{\term}{Jeff Zarnett}
 
+\section*{Virtual Memory}
+Even with paging and moving pages into and out of memory, there is a limit on what we can do with the system. Specifically, a program that requires more memory than the machine's physical memory cannot run. Maybe that seems ridiculous in the modern era of 4, 8, and 16~GB of memory, but server or supercomputer systems working on large datasets may require more memory than is available in the machine. Furthermore, when we have many programs running and a multiprocessor systems, we could have a situation where the sum of memory requirements exceeds the available memory. It is less than ideal to have a processor waiting for something to do because a process that is otherwise ready to run cannot proceed because there are insufficient free frames for it to run.
+
+The problem is: a process must be entirely in memory or entirely on disk. In a lot of cases, the entire program is not needed at any given time. Code used to handle unusual situations (error handling, etc.) may not be needed except occasionally. Startup code is needed at the beginning of the program, but then never again. Data structures and collections may be declared to be very large even when it is not actually needed (e.g., the \texttt{ArrayList} in Java defaults to 16 elements, even if you might only need 4, wasting a bit of space).
+
+If we could execute programs that are only partly in memory, there would be three major benefits~\cite{osc}:
+
+\begin{enumerate}
+	\item A program is no longer constrained by the size of physical memory; programmers can use the entire virtual space without worrying about whether it fits.
+	\item Each program could use up less physical memory, allowing more processes to execute concurrently.
+	\item Less I/O is needed to swap user programs in or out.
+\end{enumerate}
+
+
+Good news, everyone!  We have already discussed many of the key ideas to making virtual memory work when we examined caching. The principle is really the same: main memory can be viewed as yet another level of cache and the disk is the last stop where the data can be. If a page is referenced and not currently in main memory, it is a page fault, and the page is loaded from disk into main memory. A page might need to be evicted from main memory to make way for it; thus a page replacement algorithm is needed to select the ``victim'' page and write it out to disk. 
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{images/vmem-physmem.png}\\
+Virtual memory exceeding the size of physical memory, with some pages on disk~\cite{osc}.
+\end{center}
+
+The typical approach is also like that of the cache, which is to use demand paging. A page is loaded into memory only if it is referenced or needed, thus preventing unnecessary disk accesses. This is also called the ``lazy'' approach in~\cite{osc}, though lazy is typically an insult and in this case it is not necessarily bad.  Clearly, we would like to involve disk as little as possible, because disk is, from the perspective of the CPU, extremely slow.
+
+The fact that disk is so slow means we can get into a troublesome state called \textit{thrashing}: the operating system is spending most or all of its time swapping pages in and out of memory and very little actual work can get done.
+
+Apparently, if the NeXT operating system, NeXTStep\footnote{One of the three parents of Mac OS X: the classic Mac OS, BSD [UNIX], and NeXTStep.} were booted on a machine with only 2~MB of RAM instead of the expected 4~MB, the steady state of the system would be a constant level of swapping~\cite{mte241}. This was particularly bad because the most common cause of failure in the NeXT boxes was hard disk drive. But they did have cool magnesium cases, so after they died they at least made impressive conversation pieces and doorstops.
+
+With virtual memory, each memory reference is a six step process~\cite{osc}:
+
+\begin{enumerate}
+	\item Check if the memory reference is valid or invalid (just as we have done before).
+	\item If the reference is invalid, terminate the program (segmentation fault). If it was valid, but the page referenced is not in memory, we will need to retrieve it.
+	\item Find a free frame (or make one by evicting some other page).
+	\item Request a disk read (and possibly write) to bring in the new page.
+	\item When the disk read os complete, update the records to show the new page is in memory.
+	\item Restart the instruction that referenced the page that needed to be brought into memory.
+\end{enumerate}
+
+Or, to view this visually:
+
+\begin{center}
+\includegraphics[width=0.7\textwidth]{images/handling-page-fault.png}\\
+Handling a page fault~\cite{osc}.
+\end{center}
+
+Note that between steps 4 and 5, a significant amount of time will take place while the disk performs a read of the desired page and possibly a write of the page to be evicted if it was modified. While the slow disk operations are going on, the process is blocked on that I/O operation and, in the meantime, the processor can and should be working on something else.
+
+The key requirement in the described workflow is the ability to restart any instruction following the page fault. We save the state of the process, including all the registers and instruction pointer and so on, when the page fault occurs, so we are able to restart the process exactly where it was. The difference is that after the restart, the page needed is in memory and is accessible. A page fault could occur on any memory reference, including fetching the next instruction. If it happens at that time, the fetch operation is don again. If a page fault happens when doing an operation that required fetching an operand, then we fetch and decor the instruction again and then fetch the operand. So a little bit of work may be repeated~\cite{osc}.
+
+Consider the \texttt{ADD} instruction that adds \texttt{A} to \texttt{B} and stores the result in \texttt{C}. First, we must fetch and decode the instruction. That tells us about the two operands, which must be retrieved themselves. Then we can add the two operands, and store the result in the target location. If a page fault occurs when trying to write to \texttt{C}, because that page is not currently in memory, we will restart the instruction. That means back to step one: fetch the \texttt{ADD} instruction again, then get the operands, then perform the addition, and finally write it into the destination location~\cite{osc}.
+
+As we can see, some work is repeated here: fetching and decoding the instruction, as well as taking the operands and doing the addition. This is not a big deal, because the time it takes the CPU to do such an operation is minuscule. CPUs are very good at executing instructions and doing this one a second time is not a big ask.
+
+While fetching the page containing \texttt{C} from disk, the page that contains \texttt{A} or \texttt{B} could get swapped out, meaning that the second run of the instruction will also produce a page fault. This is unlikely if using a sane replacement algorithm, because the page with \texttt{A} and \texttt{B} having just been referenced, it is a poor candidate for eviction. But a random page replacement algorithm could result in that behaviour on occasion. While hypothetically possible, it is very unlikely that a system would get stuck on the same instruction forever if the page containing \texttt{A} were constantly replaced in memory and cache by the page containing \texttt{C} and vice versa. But a system vulnerable to this problem would have some very significant design issues, to say the least.
+
+The question is, can every instruction be restarted without affecting the outcome? The answer is no; an example is the situation that occurs when an instruction modifies more than one memory location. If we are moving a block of $n$ bytes, it is possible those bytes will straddle a page boundary\footnote{Some CPUs and operating systems have boundary issues and take this kind of thing a bit more seriously, requiring alignment of data structures to byte and block boundaries... others don't seem to mind at all.}, either at the source or destination. We would like to avoid this situation, because the move operation may not be easily restarted if the source and destination overlap (i.e. the source is modified). One is for the CPU to try to access the start and end addresses before the move begins; if one of the pages needed is not in memory, the page fault is triggered before any data is changed, so we can be sure the move will succeed when it actually starts. Another solution is temporary registers to hold overwritten location; if a page fault occurs, then the temporary data is restored so the instruction may be restarted without affecting the operation's correctness~\cite{osc}.
+
+\subsection*{Virtual Memory Performance}
+
+
 \input{bibliography.tex}
 
 \end{document}
