@@ -63,6 +63,61 @@ The question is, can every instruction be restarted without affecting the outcom
 
 \subsection*{Virtual Memory Performance}
 
+As we have already seen, finding something in the cache is significantly faster than having to go to main memory. Retrieving something from disk is dramatically slower, but computing how long it takes to retrieve a given page will follow the same principle. Recall from earlier the effective access time formula:
+
+\begin{center}
+	Effective Access Time = $ h \times t_{c} + (1 - h) \times t_{m}$
+\end{center}
+
+Where $h$ is the hit rate, $t_{c}$ the time to retrieve a page from cache, and $t_{m}$ is the time to retrieve it from memory. If we replace the terms $t_{c}$ and $t_{m}$ with $t_{m}$ and $t_{d}$ (time to retrieve it from disk) respectively, and redefine $h$ as $p$, the chance that a page is in memory, we can get an idea of the effective access time in virtual memory: 
+
+\begin{center}
+	Effective Access Time = $ p \times t_{m} + (1 - p) \times t_{d}$
+\end{center}
+
+And just while we're at it, we can combine the caching and disk read formulae to get the true effective access time for a system where there is only one level of cache:
+
+\begin{center}
+	Effective Access Time = $ h \times t_{c} + (1 - h) ( p \times t_{m} + (1 - p) \times t_{d})$
+\end{center}
+
+This is good, but what is $t_{d}$? This is a measurable quantity so it is possible, of course, to just measure it\footnote{One of my favourite engineering sayings is ``Don't guess; measure.''}. We expect $p$ to be small if our paging algorithm is any good. But what needs to take place to handle a page fault (miss) is~\cite{osc}:
+
+\begin{enumerate}
+	\item Trap to the operating system.
+	\item Save the user registers and process state.
+	\item Identify this interrupt as a page fault.
+	\item Check that the page reference was legal. 
+	\begin{enumerate}
+		\item If so, determine the location of the page on disk.
+		\item If not, terminate the requesting program. Steps end here.
+	\end{enumerate}
+	\item Figure out where to place the page in memory (use our replacement algorithm).
+	\item Is the frame we have selected currently filled with a page that has been modified? 
+	\begin{enumerate}
+		\item If so, schedule a disk write to flush that page out to disk. The disk write request is placed in a queue.
+		\item If not, go to step 11.
+	\end{enumerate} 
+	\item Wait for the disk write to be executed. The CPU can do something else in the meantime, of course.
+	\item Receive an interrupt when the disk write has completed.
+	\item Save the registers and state of the other process if the CPU did something else.
+	\item Update the page tables to reflect the flush of the replaced page to disk. Mark the destination frame as free.
+	\item Issue a disk read request to transfer the page to the free frame.
+	\item As before, while waiting, let the CPU do something else.
+	\item Receive an interrupt when the disk has completed the I/O request.
+	\item Save the registers and state of the other process if the CPU did something else.
+	\item Update the page tables to reflect the newly read page.
+	\item Restore the state of and resume execution of the process that encountered the page fault, restarting the instruction that was interrupted.
+\end{enumerate}
+
+The slow step in all of this, is obviously, the amount of time it takes to load the page from disk. According to~\cite{osc}, restarting the process and managing memory and such take something like 1 to 100~$\mu$s. A typical hard drive in their example has a latency of 3~ms, seek time (moving the read head of the disk to the location of the page) is around 5~ms, and a transfer time of 0.05~ms. So the latency plus seek time is the limiting component, and it's several orders of magnitude larger than any of the other costs in the system. And this is for servicing a request; don't forget that several requests may be queued, making the time even longer.
+
+Thus the disk read term $t_{d}$ dominates the effective access time equation. If memory access takes 200~ns and a disk read 8~ms, we can roughly estimate the access time in nanoseconds as $(1-p) \times 8~000~000$. 
+
+If the page fault rate is high, performance is awful. If performance of the computer is to be reasonable, say around 10\%, the page fault rate has to be very, very low. On the order of $10^{-6}$. 
+
+And now you also know why solid state drives, SSDs, are such a huge performance increase for your computer. Instead of spending time measured in the milliseconds to find a page on disk, SSDs produce the data much quicker, with times that look more like memory reads.
+
 
 \input{bibliography.tex}
 
