@@ -90,8 +90,8 @@ In that analogy I played the part of the CPU, and was interrupted and had to dea
 \begin{enumerate}
 	\item \textbf{Program:} Something happens in the program (e.g., a division by zero).
 	\item \textbf{Timer:} A configured timer within the processor's time expires (e.g., to update the system clock).
-	\item \textbf{Input/Output} An I/O controller signals (un)successful completion of an operation (e.g., read from disk).
-	\item \textbf{Hardware Failure} Something happens in hardware (e.g., power failure).
+	\item \textbf{Input/Output:} An I/O controller signals (un)successful completion of an operation (e.g., read from disk).
+	\item \textbf{Hardware Failure:} Something happens in hardware (e.g., power failure).
 \end{enumerate}
 
 Interrupts are primarily a way to improve processor utilization (i.e., the fraction of the time the CPU is doing useful work). CPU time is valuable and the CPU can and should do something else while it is awaiting the results of some other operation. Thus, the CPU might issue a read from memory instruction, work on something else, and then be interrupted when the data has arrived from memory.
@@ -115,7 +115,7 @@ Left: Sequential interrupt handling. Right: Nested interrupt handling.~\cite{osi
 A combination of these different techniques may be used. A low priority interrupt handler may be suspended to deal with a high priority interrupt. Suppose while the high priority interrupt is being handled, a medium priority interrupt occurs. The high priority interrupt handler will be allowed to complete its work before the medium priority interrupt is dealt with.
 
 
-\paragraph{Storing and Restoring State.} We mentioned already that the operating system is responsible for storing the state of the program (or interrupt handler) being interrupted when an interrupt !`occurs. To do so, the state of the CPU is what must be stored. The values of the various registers (e.g., program counter, instruction register, etc.) are stored by pushing them onto the stack. When the interrupt is finished, those values are popped off the stack and loaded into the registers again. After that, program execution continues (almost) as if the interruption never took place.
+\paragraph{Storing and Restoring State.} We mentioned already that the operating system is responsible for storing the state of the program (or interrupt handler) being interrupted when an interrupt occurs. To do so, the state of the CPU is what must be stored. The values of the various registers (e.g., program counter, instruction register, etc.) are stored by pushing them onto the stack. When the interrupt is finished, those values are popped off the stack and loaded into the registers again. After that, program execution continues (almost) as if the interruption never took place.
 
 \paragraph{Multiprogramming.} Thus far we have assumed that there is a program running and that same program is the one that resumes at the end of the interrupt handling. This is, however, not always the case. Given that we have stored the state of the interrupted program, we can resume it any time we like, and run a different program now instead. But which program should we run next? We will examine the subject when we talk about scheduling.
 
