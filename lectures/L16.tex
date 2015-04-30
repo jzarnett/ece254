@@ -99,7 +99,7 @@ Let us start by attempting to run $A$ - there are 3 free resources and $A$ would
 
 Remember that just because the state is unsafe, does not mean that deadlock is present or certain. The analysis is worst-case: $C$ may never need all 7 of the resource and may run to completion with its current 2. However, in an unsafe state, we cannot be certain that deadlock will not occur.
 
-\paragraph{Resource-Allocation-Graph Algorithm.} The fourth condition for deadlock is modelled, typically as being a resource allocation graph with a cycle in it. Idea: let us use that idea to avoid deadlock by having the operating system maintain a resource allocation graph. This is applicable if there is only one instance of each resource and requires and still requires that all the resources that a process will require must be declared in advance. However, this condition does not have to be strictly adhered to, if the system allows additional requests only when none of the process's requests have yet been made.
+\paragraph{Resource-Allocation-Graph Algorithm.} The fourth condition for deadlock is modelled, typically as being a resource allocation graph with a cycle in it. Idea: let us use that idea to avoid deadlock by having the operating system maintain a resource allocation graph. This is applicable if there is only one instance of each resource and still requires that all the resources that a process will require must be declared in advance. However, this condition does not have to be strictly adhered to, if the system allows additional requests only when none of the process's requests have yet been made.
 
 The model for resource allocation graphs earlier had two kinds of edges: one representing requests (a process requests a resource) and one representing allocation (a resource currently belongs to a process). We will require a new type of edge in the graph: a \textit{claim} edge, as a way of indicating a process may request a resource at some time in the future, and it is drawn with a dashed line. When the process actually makes the request for the resource, a claim edge is converted to a request edge, and upon release the assignment edge reverts to a claim edge~\cite{osc}.
 
@@ -143,7 +143,7 @@ If more than one process may be chosen in step 1, it does not matter which we ch
 
 To determine if granting a resource will make the system unsafe, the operating system should simply perform a what-if calculation. Assume the resource is granted and do the safe state calculation given that new state. If the result is that the state is unsafe, the request should be deferred or denied.
 
-A formal, mathematical description of the banker's algorithm is defined in~\cite{osc}
+A formal, mathematical description of the banker's algorithm is defined in~\cite{osc}.
 
 As great as the banker's algorithm is in theory, in practice it is utterly useless, as highlighted by~\cite{mos}. Processes rarely know in advance what their maximum resource needs will be. Also, the number of processes is not fixed, but varies as users log in and launch and close programs and log out. Finally, a resource that was thought to be available can suddenly vanish (a peripheral device is disconnected, the network goes down, a printer breaks...). Thus in practice, the banker's algorithm can almost never be used.
 
