@@ -1,0 +1,407 @@
+\input{configuration}
+
+\title{Lecture 20 --- Dynamic Memory Allocation}
+
+\author{Jeff Zarnett \\ \small \texttt{jzarnett@uwaterloo.ca}}
+\institute{Department of Electrical and Computer Engineering \\
+  University of Waterloo}
+\date{\today}
+
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+
+ \end{frame}
+ 
+ 
+
+\begin{frame}
+\frametitle{Dynamic Memory Allocation}
+
+To create a new instance of an object in Java, for example, you use the \texttt{new} keyword and the runtime will come and garbage collect it later.
+
+In C++ we have the \texttt{new} and \texttt{delete} operators. 
+
+The \texttt{new} and \texttt{delete} operators also invoke the constructor and destructor. 
+
+C works on memory at a lower level: \texttt{malloc()} and \texttt{free()}. 
+
+This level is a lot closer to the way the operating system thinks about memory: \\
+\quad Tell me how much you need and tell me when you are finished with it.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{General Memory Allocation Interface}
+
+If we generalize this interface, we get two signatures~\cite{mte241}:
+
+\texttt{void *allocate\_memory( int size )}\\
+Allocate a block of \texttt{size} bytes of memory; return a pointer to the address of the first byte.
+
+\texttt{void deallocate\_memory( void *mem\_block )}\\
+Return the allocated block of memory at the address \texttt{mem\_block} to the pool of free memory.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Using Memory Allocation in C}
+
+To allocate an integer, you call \texttt{malloc( sizeof( int ) )}. 
+
+This creates, somewhere in memory, a new integer and returns the address of it that can be stored in a pointer.
+
+To be sure to ask for the correct amount of memory, we have \texttt{sizeof} which works out the size of its argument (integer).
+
+The size of an integer (4 bytes) is supplied to \texttt{malloc()}; 4 bytes are allocated. 
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Using Memory Deallocation in C}
+
+When you \texttt{free()} that pointer, the memory is marked as available.
+
+This is why you can sometimes get away with dereferencing a pointer after it has been freed. 
+
+Sometimes it takes a while for that memory to be reclaimed or reused so the old value just happens to still be there in memory. 
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Returning Memory when Done}
+
+Note that \texttt{free()} does not specify how much memory is being returned. 
+
+This means two things:\\ 
+\quad (1) that the operating system is keeping track of each allocated block's size\\
+\quad (2) that it is not possible to return part of a block.
+
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Fulfilling Memory Requests}
+
+The operating system will try to find some free memory to meet the request. 
+
+Running out of memory is a rare thing given the size of main memory in a modern computer.
+
+There is still the possibility that some request may not be fulfilled because no block meeting that need is available.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Fixed Block Sizes}
+
+One possibility for how to allocate memory is in fixed block sizes. 
+
+All blocks of memory allocated are the same size. 
+
+If a request comes in for 1 byte, 1 block is allocated. 
+
+If a request comes in that is, say, 1.5 blocks, 2 blocks are allocated. 
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Fixed Block Sizes: Wasteful?}
+
+It is immediately obvious when we look at this that some memory is ``wasted''. 
+
+If 1.5 blocks are requested and 2 blocks are allocated and returned, we are using up an extra 0.5 blocks. 
+
+This space cannot be used for anything useful (as it shows as allocated). 
+
+This is a problem called \alert{internal fragmentation}.
+
+The bigger each block is, the more memory will be wasted.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Fixed: One Size of Blocks}
+
+Suppose the system has only one size of blocks, perhaps, 1~KB. 
+
+Divide up memory into blocks of this fixed size and maintain a linked list of addresses of all currently available blocks. 
+
+When a block is allocated, remove its corresponding node from the linked list. 
+
+When a block is freed, put a node with that address into the linked list. 
+
+If the list is empty, a memory request cannot be satisfied; return null.
+
+This is definitely fast as we can allocate memory in $\Theta(1)$ time.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Fixed: Multiple Sizes}
+
+Recognizing that some memory allocation requests are bigger than others, it might make sense to have several different block sizes.
+
+Perhaps 1~KB, 2~KB, and 4~KB. 
+
+These can generally be allocated and deallocated in $\Theta(1)$ time if we have one linked list for each different size of block.
+
+
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Fixed: Fragmentation}
+
+Unfortunately, fixed block sizes suffer from a lot of internal fragmentation. 
+
+This may be suitable for embedded systems where simplicity and speed of operations are more important than worrying about wasting memory. 
+
+This is, we can see, not how \texttt{malloc()} works.\\
+\quad 1~KB of memory is not allocated to store a 4-byte integer. 
+ 
+What we need instead is a variable block size.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Variable Block Sizes}
+
+Variable block sizes are not that different from fixed block sizes.
+
+We just take the size of blocks down to the smallest they can be. 
+
+In a system with byte-addressable memory, the smallest block is one byte.
+
+Now a different problem: keeping track of what is allocated \& what is free.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Variable: Bitmaps}
+
+Divide memory into $M$ units of $n$ bits, and then to create a bit array of size $M$ storing the status of each of those units. 
+
+If a bit $m$ in $M$ is 0, it means that unit is unallocated.\\
+If it is 1 then that unit is allocated. 
+
+How much memory is lost to this overhead?\\
+\quad $100/(n+1)$\% of the memory is used. 
+
+If a unit is 4 bytes, the bitmap is about 3\% of memory; \\
+If it is 16 bytes the bitmap takes about 0.8\% of memory. 
+
+Finding a block of $k$ bytes requires searching the bitmap for a run of $\frac{8m}{n}$ zeros~.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Variable: Linked Lists}
+
+The other approach, as in the case of fixed size blocks, is to use linked lists. 
+
+The info of the linked list can be stored separately from memory allocation.
+
+Or it can be stored as part of the block of memory. Either approach is workable.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Variable: Linked Lists}
+
+After startup, the linked list contains one entry.\\
+\quad  All available memory is in one contiguous block. 
+
+When a memory request is allocated the block is divided up. 
+
+Suppose we allocate the first 128 bytes.\\
+\quad A new entry is placed in the list, at 128 bytes. 
+
+The node that is added contains the start address, the length of the block, and a bit indicating it is allocated. 
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Variable: Linked Lists}
+
+The unallocated block's node will contain the updated entry: smaller size, new start address, and the bit indicating it is unallocated. 
+
+When a block is deallocated, we simply find that block in the linked list and set the bit to zero to indicate it is now available again.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Variable: Deallocation}
+
+In a typical system there may be a lot of allocation and deallocation of memory. 
+
+This will probably lead to breaking memory up into smaller pieces.
+
+We may end up with free blocks small and spread out:
+\begin{center}
+\includegraphics[width=0.9\textwidth]{images/checkerboard.png}
+\end{center}
+
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Variable: Coalescence}
+
+It may be that there is a contiguous block of free memory available of size $N$. 
+
+A request for $N$ cannot be fulfilled because the memory is logically split up. 
+
+To solve this, we need a way to recombine the split blocks; \alert{coalescence}:
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{images/checkerboard-coalesced.png}
+\end{center}
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Coalescence}
+
+Coalescence is just the process or merging two adjacent free blocks into one. 
+
+Dividing memory should be a reversible operation. 
+
+This solves the problem of $N$ contiguous bytes being unable to be allocated. 
+
+Coalescence can be done periodically or whenever a block of memory is freed.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Variable: Linked List \& Coalescence}
+
+Coalescence makes it a good idea to maintain the memory blocks in a doubly-linked list.
+
+When a block is freed, it may be in the middle of two free blocks. 
+
+It is convenient to have previous and next pointers so the adjacent sections can be merged efficiently.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Variable: External Fragmentation}
+
+Even with coalescence, we may have the problem that $N$ free bytes exist in the system but spread out over many little pieces.
+
+When free memory is spread into little tiny fragments, this situation is called \alert{external fragmentation}. 
+
+It is analogous to internal fragmentation, except of course the tiny fragments are not inside any block.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Eternal Fragmentation}
+
+One way to reduce external fragmentation is to increase internal fragmentation. 
+
+If a request for $N$ bytes comes in and there is a block of $N+k$ available, where $k$ is very small, allocate the whole $N+k$ block for the request.
+
+We just accept that $k$ bytes are lost to internal fragmentation.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{External Fragmentation Example}
+
+If a free block contains 128 bytes and the request is for 120 bytes, it may not be worth the hassle and overhead to split this block into 120 and 8. 
+
+Some systems round up memory allocations to the nearest power of 2 (e.g., a request for 28 bytes gets moved up to 32). 
+
+Of course, this does not really help with satisfying the request for $N$ bytes of memory; it just keeps external fragmentation down.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Memory Compaction}
+
+Another idea is \alert{compaction}, which can also be thought of as \alert{relocation}. 
+
+The goal is simply to move the allocated sections of memory next to one another in main memory, allowing for a large contiguous block of free space. 
+
+This is a very expensive operation. 
+
+The Java runtime, for example, must ``stop the world'' (halt all program execution) while it reorganizes memory. 
+
+Even if we are willing to pay the cost, it might not be possible to do.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Memory Compaction}
+
+Languages with garbage collection like Java or C\# may do memory compaction as needed when the garbage collector runs.
+
+This can work in such languages, because variables are references.
+
+References can be moved around in memory at the garbage collector or runtime's convenience; all it needs to do is update every reference.
+
+In C we operate directly on memory addresses. 
+
+Thanks to things like pointer arithmetic and using integer variables as addresses, there is no reliable way to update all references.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Variable: Allocation Strategies}
+
+Given a memory request of $N$, where do we allocate the memory? 
+
+If there is no block of at least size $N$, the request cannot be satisfied. 
+
+If there is only one, the decision is easy. A
+
+s long as memory has two free blocks of sufficient size ($N$ or more) that cannot be coalesced, a memory allocation request will require making a decision.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Variable: Allocation Strategies}
+
+We will examine the following strategies:
+
+\begin{enumerate}
+	\item First fit.
+	\item Next fit.
+	\item Best fit.
+	\item Worst fit.
+	\item Quick fit.
+\end{enumerate}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{}
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{}
+
+
+\end{frame}
+\end{document}
+
