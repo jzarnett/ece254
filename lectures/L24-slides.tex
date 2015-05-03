@@ -1,0 +1,525 @@
+\input{configuration}
+
+\title{Lecture 24 --- Virtual Memory II }
+
+\author{Jeff Zarnett \\ \small \texttt{jzarnett@uwaterloo.ca}}
+\institute{Department of Electrical and Computer Engineering \\
+  University of Waterloo}
+\date{\today}
+
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+
+ \end{frame}
+
+
+\begin{frame}
+\frametitle{Allocation of Frames}
+
+In a simple system with $n$ frames free in the system, demand page all of them. 
+
+Initially, all frames are empty, and as needed, pages are read into those frames. 
+
+Once all $n$ frames are filled with pages, page $n+1$ must replace a page already in a frame (because there is no more space). 
+
+When a process terminates, all its frames are marked as free. In theory, one process could fill all the frames in the system. 
+
+This is as simple as it can be; from there we can build on it.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Make a Reservation}
+
+We might reserve a few pages to be free at all times for performance reasons. 
+
+When we want to move a page into a frame, if all of the frames are full, we select a victim and write that victim out to disk if necessary. 
+
+If we keep a few frames free, the newly-read page can be read into one of the free frames, and we can write the old page out to disk at a convenient time. 
+
+The read does not need to wait for the write.
+
+Therefore the user process continues a bit sooner than it otherwise would.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{How Many Frames?}
+
+We might want to allocate different numbers of frames to different processes.
+
+We are constrained in the number of pages we can allocate. 
+
+The maximum number of frames a process could have is the maximum number of frames in the system (obviously), but the minimum is more interesting.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Minimum Frames}
+
+The motivation behind a minimum number of frames is ostensibly performance. 
+
+As long as our page replacement algorithm is sane (i.e., not FIFO), adding more frames reduces the page fault rate. 
+
+As we demonstrated earlier, a page fault is a huge performance decrease. 
+
+This is not the only reason.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Minimum Frames}
+
+The absolute minimum number of frames is determined by the architecture. 
+
+Imagine a machine where a memory reference instruction may contain one memory address.
+
+In the worst case, the instruction and the address are in different pages, so we will need two frames to be able to complete this instruction.
+
+If the max frames for this process were 1, the instruction could never complete.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Minimum Frames: IBM 370}
+
+The IBM 370 \texttt{MVC} instruction is an extreme example: it moves data from one storage location to another. 
+
+It takes six bytes, and the instruction itself can straddle two pages. 
+
+That requires six frames. 
+
+The worst case scenario is when the \texttt{MVC} instruction is the operand of an \texttt{EXECUTE} instruction that also straddles a page boundary. 
+
+So eight (!) frames are needed.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Minimum Fames: Infinite?}
+
+In theory, the problem could be infinitely bad if the computer architecture allows referencing of an indirect address. 
+
+The address being referenced could be on another page. 
+
+That instruction could then reference another indirect address, and it's turtles all the way down.
+
+The standard solution is to limit the levels of indirection to some manageable value, 
+
+If we limited the levels of indirection to 16, then the worst case scenario is a requirement of 17 pages.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Allocation Strategies}
+
+Assuming we do not allocate every process the minimum or maximum, there are a few allocation algorithms we might follow. 
+
+We already got a glimpse at this when we talked about local vs. global cache replacement.
+
+If there are $m$ frames in the system and the operating system reserves $k$ of them for its own use, there are $m-k$ frames available for processes.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Equal Allocation}
+
+If there are $n$ processes, each process gets $(m-k)/n$ frames. 
+
+If this division produces a remainder, the leftover frames can be kept as a pool of free frames for performance purposes as above. 
+
+But: why does a text editor get the same amount of frames as a web browser?
+
+And the same amount of frames as a game (VERY demanding on memory)?
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Proportional Allocation}
+
+Each process should get a share of the frames based on its needs. 
+
+Let the virtual memory size of a process $p_{i}$ be defined as $s_{i}$. 
+
+Thus $S = \Sigma s_{i}$. 
+
+Then we allocate $a_{i}$ frames to a process $p_{i}$ according to the formula: 
+
+$a_{i} = s_{i} / S \times (m - k)$.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Proportional Allocation}
+
+This value of $a_{i}$ is only an estimate. 
+
+It may not divide evenly. 
+
+We can only allocate an integer number of frames to each process.  
+
+So we will have to raise or lower $a_{i}$ a bit to make it an integer. 
+
+If $a_{i}$ is below the minimum number of frames, then it needs to get bumped up.
+
+We also must respect the limits of the system: the sum of all $a_{i}$ values may not exceed the total frames of memory (minus the OS reserve).
+
+A few of the larger processes may need to have their allocations nudged down.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Proportional Allocation}
+
+Note that with proportional allocation, as with equal allocation, there is no regard given to the priorities of the processes. 
+
+Normally, we would want to give more frames to higher priority processes so their page fault rates are lower and they can therefore execute more quickly. 
+
+So we could modify the $a_{i}$ values according to process priority. 
+
+The subject of priority is something we have not yet examined much yet, but will do so soon when we get to talking about scheduling; the next major topic. 
+
+But, first, let's finish what we are doing with memory.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Local and Global Replacement}
+
+We already saw the idea of local and global replacement in the cache. 
+
+If we have chosen the LRU algorithm, in a global replacement policy, the least recently used page anywhere in the cache (memory) will be replaced. 
+
+If we chose a local page replacement policy, it is the least recently used page that belongs to the current process.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Local and Global Replacement}
+
+Local is not affected much by our allocation concerns; leave that alone. 
+
+Suppose we choose global allocation. 
+
+We will see the number of pages allocated to each change over time. 
+
+Over time, a global replacement algorithm means processes that run more often will accumulate more pages in memory.
+
+They will acquire more pages than get taken from them.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Watching Frame Counts}
+
+It might make sense to watch to see how many frames each process has. 
+
+It may be desirable to prevent a process from falling below the minimum number of pages.
+
+Or we swap completely to disk a process that no longer meets that threshold.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Thrashing}
+This topic was previously introduced, and now we'll come back to it.
+
+The quick definition of thrashing still applies.
+
+That still applies. Aside from intentionally depriving the system of RAM, how can we get into this state, and how can we get out of it?
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Thrashing}
+
+In simple operating systems, the logic that controlled how many processes to run at a time would rely just on the CPU utilization. 
+
+If CPU utilization is low, the CPU needs more work to do! 
+
+Assign it more work by starting or bringing more processes into memory. 
+
+The global page replacement policy is used here, so when a process gets a page fault, it takes a frame from another process. 
+
+Under most circumstances, this works just fine.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Downward Spiral}
+
+This situation can run until one process starts to have a lot of page faults. 
+
+This is not unreasonable; a compiler might be finished with reading and parsing the input files and moving to generation of binary code. 
+
+This requires a whole bunch of new instructions pages, plus pages for output. 
+
+When this process does so, it starts taking pages from other processes.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Downward Spiral}
+
+The victim processes need the pages they had, so when they get a turn to run, they too start generating page faults. 
+
+So more and more requests are queued up for memory writes and reads, so the CPU is not very busy. 
+
+Here's the fatal mistake: seeing that the CPU is not very busy, the OS schedules \textbf{more} programs to run.  
+
+\end{frame}
+
+\begin{frame}
+\frametitle{The Doom in Thrashing}
+
+A new process getting started will need at least the minimum number of pages. 
+
+These have to come from somewhere, so they will necessarily come from the pages currently belonging to other processes. 
+
+This causes more page faults, more time spent paging, lower CPU utilization...\\
+\quad Prompting the OS to start more processes. 
+\end{frame}
+
+\begin{frame}
+\frametitle{Whiplash!}
+
+No more work is getting done, because the system spends all its time moving pages into and out of memory, thrashing all around, acting like a maniac.
+
+\begin{center}
+\includegraphics[width=0.75\textwidth]{images/thrashing.png}
+\end{center}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Breaking the Spiral}
+
+To increase CPU utilization we need to stop the thrashing...\\
+\quad which means we need \textbf{fewer} programs in memory at a time. 
+
+CPU usage alone is not a sufficient indicator of whether more or fewer processes need to be running right now. 
+
+It also matters \textit{why} the CPU utilization is low. Another reason that might cause low CPU usage is, as you may recall, deadlock. 
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Local Replacement Instead}
+
+What if we stop using a global replacement policy and instead use local? 
+
+This limits some of the damage;\\
+\quad If $P_{1}$ is thrashing, it cannot steal pages from $P_{2}$.\\
+\quad We do not get a cascade.
+
+But $P_{2}$ is still affected.
+
+If $P_{1}$ is spending all its time paging to and from disk, any other process that wants to use the disk is going to have to spend more time waiting for the disk.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Starting and Suspending Processes}
+
+Decide whether to start or suspend programs not just based on CPU usage, but also on the number of page faults that occur in a given period of time. 
+
+If there are too many page faults, it indicates we have too much going on. 
+
+That is a reactive solution, however. 
+
+It would be better to be proactive and deal with this before thrashing has started.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{More Clairvoyance}
+
+As is typical, a bit of clairvoyance would help here: how many pages is the process going to need and when will it need them? 
+
+Unfortunately, there is no good way to know or to figure this out. So we will have to rely on (educated) guessing.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Guessing?!}
+
+You may hate the idea of guessing. 
+
+As a general engineering practice, ``let's do an experiment and find out'' is good, provided you can analyze the result and if things go wrong, no damage is done. 
+
+Those last conditions make it kind of infeasible to do medical experiments just to see what would happen, or for NASA to play around with satellites in orbit. 
+
+So in those cases, a simulation is probably the better approach. 
+
+Even so, sometimes we don't have (or can't get) the data we need and we will therefore need to ``make our best guess''.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Making Our Best Guess}
+
+What do we know about process memory accesses? 
+
+They tend to obey the principle of locality, both temporal and spatial.
+
+We could think of different parts of the program as different localities, as if they were areas on a map. And localities may overlap sometimes. 
+
+Give a process enough frames for its locality. 
+
+It can operate in this little area without encountering (too many) page faults.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Check Assumptions}
+
+\begin{center}
+\includegraphics[width=0.55\textwidth]{images/locality.png}
+\end{center}
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{The Working-Set Model}
+
+A potential solution is the working-set model. 
+
+Retain the last $n$ pages in memory as they represent the locale of the program. 
+
+Assuming that most memory accesses are local, the most recent $n$ pages will be the most frequently used.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{The Working-Set Model}
+
+In the textbook descriptions, this $n$ is usually called $\Delta$, the working set window. 
+
+Pages that have been recently used are in the working set. 
+
+If a page has not been accessed recently, it will drop out of the working set after $\Delta$ time units since its last reference. 
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Working Set Example}
+
+Suppose the window is defined as being ten accesses. 
+
+Any page that was accessed in the last ten requests will then be considered part of the working set. 
+
+If the next ten memory accesses are all in page $k$, then after those further ten accesses, the working set will contain only $k$. 
+
+The size of the working set will change over time; can be from 1 to $\Delta$ pages.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Choosing Delta}
+
+If $\Delta$ is too small, the working set will not encompass the entire locale. 
+
+If it is too large, it will cover multiple locales. 
+
+Underestimating the size of the locale is bad; it will mean more page faults.
+
+
+Overestimating is also bad; it means fewer processes will be allowed to run.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Sum of the Working Sets}
+
+If the working set of every process is summed up, we will get the total number of frames each process would ``like'' to have. 
+
+If this sum exceeds the $(m-k)$ available frames in the system, at least one process is going to be unhappy.
+
+It does not have as many frames as it will need. 
+
+And like unhappy workers who go on strike, unhappy process start thrashing.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Working Sets}
+
+Once a value of $\Delta$ is determined, the OS will monitor the working set of each process and use that to figure out if the system is currently overloaded. 
+
+If it is, the OS will pick a victim and suspend it to prevent thrashing. 
+
+If the system is underloaded (frame supply exceeds demand), more processes can be started to run.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Working Set}
+
+The page fault rate of a process tends to vary over time. 
+
+At the beginning, there will be a bunch of page faults as the program starts up. 
+
+Then once established in its first locale, the rate will drop. 
+
+When it come time to move to a new locale, the page fault rate rises until the program is ``settled'' in that new locale.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Working Set}
+
+\begin{center}
+	\includegraphics[width=0.75\textwidth]{images/workingset.png}
+\end{center}
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Working Set Analogy}
+
+magine that you have moved to a new city for a co-op term. 
+
+When you have just moved, you will frequently rely on Google Maps to find what you are looking for and how to get there. 
+
+You need to buy groceries, so you ask Google for directions to the nearest grocery store of choice. 
+
+Once you've been there, you know the way so you don't have to ask again. 
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Working Set Analogy}
+
+Not knowing where the grocery store is equals a page fault, and asking Google is like asking the operating system to bring in that page from disk. 
+
+Once you know the way to the grocery store, it is part of your working set and you do not have to ask again.
+
+
+... Until your next co-op term when you move somewhere else.
+
+\end{frame}
+
+\end{document}
+
