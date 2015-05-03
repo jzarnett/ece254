@@ -18,7 +18,7 @@ If we could execute programs that are only partly in memory, there would be thre
 \end{enumerate}
 
 
-Good news, everyone!  We have already discussed many of the key ideas to making virtual memory work when we examined caching. The principle is really the same: main memory can be viewed as yet another level of cache and the disk is the last stop where the data can be. If a page is referenced and not currently in main memory, it is a page fault, and the page is loaded from disk into main memory. A page might need to be evicted from main memory to make way for it; thus a page replacement algorithm is needed to select the ``victim'' page and write it out to disk. 
+Good news, everyone!  We have already discussed many of the key ideas to making such a system work when we examined caching. The principle is really the same: main memory can be viewed as yet another level of cache and the disk is the last stop where the data can be. If a page is referenced and not currently in main memory, it is a page fault, and the page is loaded from disk into main memory. A page might need to be evicted from main memory to make way for it; thus a page replacement algorithm is needed to select the ``victim'' page and write it out to disk. 
 
 \begin{center}
 \includegraphics[width=0.5\textwidth]{images/vmem-physmem.png}\\
@@ -81,7 +81,7 @@ And just while we're at it, we can combine the caching and disk read formulae to
 	Effective Access Time = $ h \times t_{c} + (1 - h) ( p \times t_{m} + (1 - p) \times t_{d})$
 \end{center}
 
-This is good, but what is $t_{d}$? This is a measurable quantity so it is possible, of course, to just measure it\footnote{One of my favourite engineering sayings is ``Don't guess; measure.''}. We expect $p$ to be small if our paging algorithm is any good. But what needs to take place to handle a page fault (miss) is~\cite{osc}:
+This is good, but what is $t_{d}$? This is a measurable quantity so it is possible, of course, so just measure it\footnote{One of my favourite engineering sayings is ``Don't guess; measure.''}. We expect $p$ to be small if our paging algorithm is any good. But what needs to take place to handle a page fault (miss) is~\cite{osc}:
 
 \begin{enumerate}
 	\item Trap to the operating system.
