@@ -20,11 +20,13 @@ time. Functions that were originally part of the operating system have migrated 
 
 \hfill - What Can Be Automated?: The Computer Science and Engineering Research Study, MIT Press, 1980
 
-An operating system (often abbreviated OS) is a piece of software that sits between the hardware of a computer and the applications (programs) that run on that computer. The OS does many different things and often has many (occasionally-conflicting) goals. To use an analogy, you may wish to think of the operating system as the ``secretary'' of the computer: it is responsible for seeing to it that other programs can operate efficiently, providing an environment for other programs, and collecting and reporting data about what is and has been happening.
+An operating system (often abbreviated OS) is a piece of software that sits between the hardware of a computer and the applications (programs) that run on that computer. The OS does many different things and often has many (occasionally-conflicting) goals. 
+
+To use an analogy, you may wish to think of the operating system as the ``secretary'' of the computer.  It is a resource manager, and it allocates resources as necessary.  The most significant difference between a secretary and an operating system is that while a secretary can work in parallel with you, operating systems often work when programs are sleeping, and operating systems must put themselves to sleep to allow programs to execute. It is responsible for seeing to it that other programs can operate efficiently, providing an environment for other programs, and collecting and reporting data about what is and has been happening.
 
 \begin{center}
-\includegraphics[width=0.75\textwidth]{images/os-sw-hw.png}\\
-Structural diagram of a modern computer~\cite{osi}
+\includegraphics[width=0.73\textwidth]{images/os-sw-hw.png}\\
+Structural diagram of a modern computer~\cite{osi}.
 \end{center}
 
 An operating system is also responsible for resource allocation. In the real world, the resources we have to work with, such as CPU time or memory space, are limited. The OS decides how to allocate these resources, keeps track of who currently owns what, and, in the event of conflicting requests, determines who gets the resource.
@@ -76,7 +78,9 @@ Thus, the next major innovation was \textit{timesharing} where each user gets a 
 
 UNIX emerged in the third generation. The history of UNIX is long and varied, but it is arguably the most successful operating system ever. Almost all PC operating systems and many mobile ones are either descended from UNIX or an (often poor) attempt to reinvent it. The history and heritage of UNIX is long; too long to go over in this lecture. At this point it was possible to write programs to run on different systems so IEEE developed a standard, called \textit{POSIX} that versions of UNIX support. It turns out, humorously enough, that Windows NT is, in the most technical sense, POSIX-compliant, but Microsoft did the most minimal and nonfunctional implementation they could get away with for business reasons. Linux is a clone of UNIX intended to be compatible with and implement the POSIX standard.
 
-\paragraph{The Fourth Generation.} Starting from about 1980, we entered the age of personal computers. In this era we saw the emergence of the IBM PC and the MS-DOS (MicroSoft Disk Operating System) and people having their own computers on their desks and in their homes. Up to this point interaction with the computer was all text based, until Apple capitalized on an invention by Xerox called the GUI (Graphical User Interface). We started to have operating systems that were user-friendly and not just for computer experts and programmers. Microsoft, of course, got the idea that it should have a GUI as well, and thus, Windows was born. UNIX users got a graphical interface too, called X11 (or X Windows). 
+\paragraph{The Fourth Generation.} Starting from about 1980, we entered the age of personal computers. In this era we saw the emergence of the IBM PC and the MS-DOS (MicroSoft Disk Operating System) and people having their own computers on their desks and in their homes. This became possible with the advent of the microprocessor. Rather than having a computer being composed of numerous connected integrated circuits, the computer became a single integrated circuit with supporting peripherals.
+
+Up to this point interaction with the computer was all text based, until Apple capitalized on an invention by Xerox called the GUI (Graphical User Interface). We started to have operating systems that were user-friendly and not just for computer experts and programmers. Microsoft, of course, got the idea that it should have a GUI as well, and thus, Windows was born. UNIX users got a graphical interface too, called X11 (or X Windows). 
 
 The GUI is more than just, if you will pardon the pun, window dressing. With the advent of the GUI a single user often started to have multiple things going on at a time, like playing some music while writing an essay with the e-mail program checking automatically for new mail. This is similar to the situation where we had multiple users all connected to the central system, in that protection between the various programs is needed. Parallelism receded for a while when people were using MS-DOS on their personal computers, but came back in a big way with Windows.
 

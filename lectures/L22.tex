@@ -22,7 +22,7 @@ Effective Access Time = $h \times t_{c} + (1-h) \times t_{m}$
 
 Where $h$ is the hit ratio, $t_{c}$ is the time required to load a page from cache, and $t_{m}$ is the time to load a page from memory. Of course, we would like the hit ratio to be as high as possible. 
 
-Caches have limited size, because faster caches are more expensive. With infinite money we might put everything in registers, but that is rather unrealistic. Caches for memory are very often multileveled; Intel 64-bit CPUs tend to have L1, L2, and L3 caches. L1 is the smallest and L3 is the largest. Obviously, the effective access time formula needs to be updated to be expanded, when we have multiple levels of cache with different access times and hit rates. See the diagram below:
+Caches have limited size, because faster caches are more expensive. With infinite money we might put everything in registers, but that is rather unrealistic. Caches for memory are very often multileveled; Intel 64-bit CPUs tend to have L1, L2, and L3 caches. L1 is the smallest and L3 is the largest. Obviously, the effective access time formula needs to be updated and expanded, when we have multiple levels of cache with different access times and hit rates. See the diagram below:
 
 \begin{center}
 \includegraphics[width=0.6\textwidth]{images/caches.png}\\
@@ -32,7 +32,7 @@ Three levels of cache between the CPU and main memory~\cite{osi}.
 If we have a miss in the L1 cache, the L2 cache is checked. If the L2 cache contains the desired page, it will be copied to the L1 cache and sent to the CPU. If it is not in L2, then L3 is checked. If it is not there either, it is in main memory and will be retrieved from there and copied to the in-between levels on its way to the CPU. Because caches have limited size, we have to manage this storage carefully.
 
 \subsection*{Page Replacement Algorithms}
-Whenever a page fault occurs, the operating system needs to choose which page to evict from the cache to make space for the new one. This assumes that the cache is full, which it likely is except at system startup. We could, of course, just select a random page, but we should do this task more intelligently, if we can.
+Whenever a page fault occurs, the operating system needs to choose which page to \textit{evict} from (kick out of) the cache to make space for the new one. This assumes that the cache is full, which it likely is except at system startup. We could, of course, just select a random page, but we should do this task more intelligently, if we can.
 
 To make an intelligent decision about what sort of strategy to choose, we need to know a few things about how data is accessed in a system. A few observations from~\cite{mte241}:
 
@@ -68,7 +68,7 @@ Initially, $R$ and $M$ are 0. Periodically, the $R$ bit is cleared to distinguis
 The OS will prefer to to remove a page from the lowest-numbered class, when possible. This NRU algorithm is fairly easy to understand and may provide adequate performance.
 
 \paragraph{First-In-First-Out.}
-First-In-First-Out is quite easy to understand and implement; the idea is some sort of temporal locality. If there are $N$ frames, keep a counter that points to the frame that is to be replaced (the counter ranges from $0$ to $N-1$). Whenever a page needs to be replaced, replace the page at the counter index and increment the counter. 
+First-In-First-Out is quite easy to understand and implement; the idea is some sort of temporal locality. If there are $N$ frames, keep a counter that points to the frame that is to be replaced (the counter ranges from $0$ to $N-1$). Whenever a page needs to be replaced, replace the page at the counter index and increment the counter, wrapping around to 0 where necessary.
 
 Some of the time this strategy works: if a page is not going to be referenced again (or at least, for a very long time), it is a good choice to get rid of. Often times, however, the same page is referenced repeatedly, and this algorithm does not take that into account. If a page is referenced often, we want to keep it in memory, not evict it just because it has been in the cache the longest. So FIFO is probably not the best choice.
 
@@ -78,7 +78,7 @@ To improve on the FIFO algorithm, suppose we give pages a ``second chance'' base
 This addresses the problem of a page that is frequently used eventually becoming the oldest and being evicted, only to be brought back into memory again immediately afterwards.
 
 \paragraph{Least Recently Used (LRU).}
-The least recently used (LRU) algorithm means the page that is to be replaced is the one that has been accessed most distantly in the past. You might consider time stamps and searching a list, but because there are two operations, it need not be that complex. When a page in the cache is accessed, move that page to the back of the list. When a page is not found in cache, the page at the front of the list is removed and the new page is put at the back of the list. This requires nothing more than a cyclic doubly-linked list. Both operations can be performed in $\Theta(1)$ time~\cite{mte241}.
+The least recently used (LRU) algorithm means the page that is to be replaced is the one that has been accessed most distantly in the past. You might consider time stamps and searching a list, but because there are only two operations, it need not be that complex. When a page in the cache is accessed, move that page to the back of the list. When a page is not found in cache, the page at the front of the list is removed and the new page is put at the back of the list. This requires nothing more than a cyclic doubly-linked list. Both operations can be performed in $\Theta(1)$ time~\cite{mte241}.
 
 \begin{center}
 \includegraphics[width=0.7\textwidth]{images/lru-linkedlist.png}\\
@@ -93,11 +93,11 @@ It may occur to you that this solution has a problem: like an elephant, it never
 The solution is called \textit{aging}: counters are shifted to the right by 1 bit before the 1 is added; and instead of adding 1 (which increments the rightmost bit), set the leftmost bit to 1. Now we have a bit array of byte size (no need for a 4-byte integer, most likely). Thus, a page that has not been referenced in a while has its value decrease over time. The page replacement algorithm still evicts the lowest value page when it is time to replace a page. We lose a certain amount of precision compared to the LRU approach: if pages $a$ and $b$ both have patterns of \texttt{00000001} we know they were both last accessed 8 cycles ago, but all history before that point is lost. Which page between $a$ and $b$ was least recently used is unknown~\cite{mos}. 
 
 \paragraph{Pre-Paging.}
-Thus far all of our strategies for putting things in the cache have been ``on-demand'': it is only when a page is needed and not found in the cache that a page is loaded into the cache. Suppose instead that the operating system takes some steps to guess about what pages might be needed next, based on the principle of temporal locality. This might reduce the amount of time spent waiting for a page in the future.
+Thus far all of our strategies for putting things in the cache have been ``on-demand'': it is only when a page is needed and not found in the cache that a page is loaded into the cache. Suppose instead that the operating system takes some steps to guess about what pages might be needed next, based on the principle of temporal or spatial locality. This might reduce the amount of time spent waiting for a page in the future.
 
-Predicting which pages re likely to be used in the near future is, indeed, a matter of clairvoyance. There exist various techniques to determine the likely pages to be used frequently (called the ``working set''), but they are complex and will not be examined further here.
+Predicting which pages are likely to be used in the near future is, indeed, a matter of clairvoyance. There exist various techniques to determine the likely pages to be used frequently (called the ``working set''), but they are complex and will not be examined further right now.
 
-Another situation in which pre-paging might be useful is when a program is started or swapped into memory. Technically, no pages of the process need to be loaded into the cache to start with; we can simply suffer through a whole bunch of page faults. This is rather slow; it might be better to load multiple pages into the cache to start with, though this will of course require some guesses about what pages will be needed~\cite{mos}.
+A situation in which pre-paging might be useful is when a program is started or swapped into memory. Technically, no pages of the process need to be loaded into the cache to start with; we can simply suffer through a whole bunch of page faults. This is rather slow; it might be better to load multiple pages into the cache to start with, though this will of course require some guesses about what pages will be needed~\cite{mos}.
 
 \subsection*{Choosing an Algorithm}
 Consider the following table that gives a quick overview of the algorithms we have discussed:
@@ -109,7 +109,7 @@ Consider the following table that gives a quick overview of the algorithms we ha
 	Not Recently Used &  Not very good performance \\
 	First In First Out & Highly suboptimal \\
 	Second Chance & Much better than FIFO, but just adequate \\
-	Least Recently Used & Best performer, difficult to implementt \\
+	Least Recently Used & Best performer, difficult to implement? \\
 	Not Frequently Used & Approximation of LRU \\
 	NFU + Aging & Better approximation of LRU\\
 \end{tabular}
@@ -126,7 +126,7 @@ Of course, different levels of cache might have different strategies: if the L1 
 
 Local algorithms give each process some (roughly) fixed number of pages in the cache. Global algorithms dynamically allocate cache space to different programs based on their needs, so the number of pages in the cache for each process can vary over time. 
 
-According to~\cite{mos}, global algorithms work better, especially when processes' memory needs change over times. If the local algorithm is used, we may be wasting some of the space in the cache for a process that does not really need it. 
+According to~\cite{mos}, global algorithms work better, especially when processes' memory needs change over time. If the local algorithm is used, we may be wasting some of the space in the cache for a process that does not really need it. 
 
 Suppose we have a sufficiently large cache, and a dynamic allocation (global algorithm) with some intelligence to keep any process from having too many or too few pages in the cache. To manage the complexity of how much of the cache should be allocated to a particular process, we might wish to keep track of the number of page faults with a measure called the \textit{page fault frequency} or PFF. In simplest terms, the PFF is the guide for telling whether a given process has too few, too many, approximately the right number of pages. 
 
