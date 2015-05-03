@@ -5,7 +5,7 @@
 \lecture{ 20 --- Dynamic Memory Allocation }{\term}{Jeff Zarnett}
 
 \section*{Dynamic Memory Allocation}
-By now you must surely be familiar with dynamic memory allocation from the perspective of the application developer. To create a new instance of an object in Java, for example, you use the \texttt{new} keyword and the runtime will come and garbage collect it when it is no longer needed. In C++ we have the \texttt{new} and \texttt{delete} operators to allocate and deallocate memory. The \texttt{new} and \texttt{delete} operators also allocate memory, but they also invoke the constructor and destructor, respectively. C works on memory at a lower level: to allocate a block of memory in C, there is \texttt{malloc()} and when finished, you return it with \texttt{free()}. This level is a lot closer to the way the operating system thinks about memory: just tell me how much you need and tell me when you are finished with it.
+By now you must surely be familiar with dynamic memory allocation from the perspective of the application developer. To create a new instance of an object in Java, for example, you use the \texttt{new} keyword and the runtime will come and garbage collect it when it is no longer needed. In C++ we have the \texttt{new} and \texttt{delete} operators to allocate and deallocate memory. The \texttt{new} and \texttt{delete} operators invoke the constructor and destructor, respectively. C works on memory at a lower level: to allocate a block of memory in C, there is \texttt{malloc()} and when finished, you return it with \texttt{free()}. This level is a lot closer to the way the operating system thinks about memory: just tell me how much you need and tell me when you are finished with it.
 
 If we generalize this interface, we get two signatures~\cite{mte241}:
 
@@ -30,7 +30,7 @@ It is immediately obvious when we look at this that some memory is ``wasted''. I
 
 \paragraph{Fixed Block Sizes, Multiple Size Options.} Recognizing that some memory allocation requests are bigger than others, it might make sense to have several different block sizes; perhaps 1~KB, 2~KB, and 4~KB. These can generally be allocated and deallocated in $\Theta(1)$ time if we have one linked list for each different size of block~\cite{mte241}.
 
-Unfortunately, fixed block sizes suffer from a lot of internal fragmentation. While this may be suitable for embedded systems where simplicity and speed of operations are more important than worrying about wasting memory. It is obvious from working with languages like C that this is not how \texttt{malloc()} works: 1~KB of memory is not allocated to store a 4-byte integer. What we need instead is a variable block size.
+Unfortunately, fixed block sizes suffer from a lot of internal fragmentation. This may be suitable for embedded systems where simplicity and speed of operations are more important than worrying about wasting memory. It is obvious from working with languages like C that this is not how \texttt{malloc()} works: 1~KB of memory is not allocated to store a 4-byte integer. What we need instead is a variable block size.
 
 \subsection*{Variable Block Sizes}
 To a certain extent, variable block sizes are not that different from fixed block sizes; we just take the size of blocks down to the smallest they can be. In a typical system with byte-addressable memory, in a way, the smallest block is one byte. Now we have a different problem: keeping track of what is allocated and what is free.

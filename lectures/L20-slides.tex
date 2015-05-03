@@ -390,18 +390,202 @@ We will examine the following strategies:
 	\item Quick fit.
 \end{enumerate}
 
-\end{frame}
-
-\begin{frame}
-\frametitle{}
-
+Let's use two linked lists: one for allocated memory and one for unallocated memory. 
 
 \end{frame}
 
 \begin{frame}
-\frametitle{}
+\frametitle{First Fit}
+
+Start looking at the beginning of memory, and check each block. 
+
+If the block is of sufficient size, split it to allocate the memory, and return the balance to the unallocated memory list. 
+
+This algorithm has a runtime of $O(n)$ where $n$ is the number of blocks. 
+
+This algorithm is simple to implement. 
+
 
 
 \end{frame}
+
+\begin{frame}
+\frametitle{Next Fit}
+
+Modification of first fit.
+
+Keep track of where the last block was allocated, and then start the next search after that. 
+
+This prevents the situation where there are a lot of small unallocated blocks (external fragmentation) all concentrated at the start of memory. 
+
+The runtime is still $O(n)$, as with first fit.
+
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Best Fit}
+
+We could instead try to make a more intelligent decision. 
+
+Considering all blocks, we choose the smallest block that is at least as big as $N$.
+
+This produces the smallest remaining unallocated space at the end. 
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Best Fit}
+
+This would require either:\\
+\quad (1) checking every available block ($\Theta(n)$ runtime); or\\
+\quad (2) keeping the blocks sorted by increasing size ($O(n)$ runtime). 
+
+If we use an AVL tree or red-black tree, then we can get best fit to run in $\Theta($ln$(n))$, possibly better runtime than first fit.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Worst Fit}
+
+The problem with best fit is that the leftover bits of memory are likely to be too small to be useful. 
+
+Rather than trying to find the smallest block that is of size $N$ or greater, choose the largest block of free memory. 
+
+When the block is split, the remaining free block is, hopefully, large enough to be useful. 
+
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Worst Fit}
+
+As with best fit, we must either:\\
+\quad (1) check each available block; or \\
+\quad (2) keep the block sorted by size, though decreasing size this time. 
+
+A max heap is appropriate, or a binomial or Fibonacci heap could also be appropriate.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Quick Fit}
+
+Though not a solution on its own, quick fit is an optimization. 
+
+Use if memory requests of a certain size are known to be common. 
+
+Common: requests for 1~MB.
+
+Keep a separate list of blocks that are of perhaps 1-1.1~MB in size, so that if the request for 1~MB does come in, it can be satisfied immediately and quickly. 
+
+\end{frame}
+
+\begin{frame}
+\frametitle{16 MB Allocation Example}
+
+\begin{center}
+\includegraphics[width=0.60\textwidth]{images/first-best-next.png}
+\end{center}
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Choosing a Strategy}
+
+Simulations show that worst fit performs, well, worst in terms of time required to fulfill an allocation request and that it results in the most wasted space. 
+
+First (next) and best fit are about equal in how well they utilize memory, but first fit tends to be faster. 
+
+Despite this, even with optimization, given $x$ allocated blocks, another 0.5$x$ blocks may be lost to fragmentation.
+
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Choosing a Strategy}
+
+The next fit algorithm tends to do allocations at the end of memory, so the largest block of free memory (typically at the end) is quickly broken up. 
+
+First fit tends to litter the beginning of memory with small fragments.
+
+Best fit tends to produce free blocks that are too small to be useful. 
+
+
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Binary Buddy}
+How about a compromise between fixed and variable allocation?
+
+There is some internal fragmentation, but it is a trade-off against how much external fragmentation we are willing to accept.
+
+System: \alert{binary buddy}.
+
+
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Binary Buddy}
+
+In a buddy system, memory blocks are available in powers of 2. 
+
+More formally, a block is of size $2^{K}$, where $L \leq K \leq U$.
+
+$2^{L}$ is the smallest block size that can be allocated.
+
+$2^{U}$ is the largest block size that can be allocated (full size of memory). 
+
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Binary Buddy}
+
+Initially, memory is treated as a single block of size $2^{U}$. 
+
+If a request of size $n$ occurs, $2^{U-1} \leq n \leq 2^{U}$, then the entire block is allocated. 
+
+Otherwise, the block is split into two ``buddies'', of size $2^{U-1}$. 
+
+If $2^{U-2} \leq n \leq 2^{U-1}$, allocate one of the blocks of $2^{U-1}$ to the request.
+
+Otherwise, subdivide again. 
+ 
+Repeat until the smallest block greater than or equal to $n$ is allocated. 
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Binary Buddy}
+
+In subsequent allocations, we look through the data structure to find either:\\
+\quad (1) a block of appropriate size; or\\
+\quad (2) a block that can be subdivided to meet the allocation. 
+
+Whenever a pair of buddies (two blocks of equal size, split from the same ``parent'') in the list are both free, they can be coalesced.
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Binary Buddy 1~MB Block}
+
+\begin{center}
+\includegraphics[width=\textwidth]{images/binary-buddy.png}
+\end{center}
+
+
+\end{frame}
+
 \end{document}
 
