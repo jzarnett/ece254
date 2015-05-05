@@ -1,7 +1,5 @@
 \input{configuration}
-\usepackage{dcounter}
-\DeclareDynamicCounter{pf}
-\DynamicCount{pf}
+\newcounter{pf}
 
 \title{Lecture 23 --- Virtual Memory}
 
@@ -296,6 +294,8 @@ We expect $p$ to be small if our paging algorithm is any good.
 
 \end{frame}
 
+
+
 \begin{frame}
 \frametitle{Handling a Page Fault}
 
@@ -303,10 +303,8 @@ Handling a page fault is a ``simple'' 16 step process!
 
 ... You can see why it is something we wish to avoid.
 
-
-
-\begin{enumerate}\usecounter{pf}
-	\item Trap to the operating system.\setcounter{pf}{1}
+\begin{enumerate}
+	\item Trap to the operating system.
 	\item Save the user registers and process state.
 	\item Identify this interrupt as a page fault.
 	\item Check that the page reference was legal. 
@@ -314,13 +312,15 @@ Handling a page fault is a ``simple'' 16 step process!
 		\item If so, determine the location of the page on disk.
 		\item If not, terminate the requesting program. Steps end here.
 	\end{enumerate}
+	\setcounter{pf}{\theenumi}
 \end{enumerate}
 
 \end{frame}
 
 \begin{frame}
 \frametitle{Handling a Page Fault}
-\begin{enumerate}\usecounter{pf}
+\begin{enumerate}
+	\setcounter{enumi}{4}
 	\item Figure out where to place the page in memory (use our replacement algorithm).
 	\item Is the frame we have selected currently filled with a page that has been modified? 
 	\begin{enumerate}
@@ -336,7 +336,8 @@ Handling a page fault is a ``simple'' 16 step process!
 \begin{frame}
 \frametitle{Handling a Page Fault}
 
-\begin{enumerate}\usecounter{pf}
+\begin{enumerate}
+	\setcounter{enumi}{8}
 	\item Save the registers and state of the other process if the CPU did something else.
 	\item Update the page tables to reflect the flush of the replaced page to disk. Mark the destination frame as free.
 	\item Issue a disk read request to transfer the page to the free frame.
