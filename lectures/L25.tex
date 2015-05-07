@@ -50,21 +50,21 @@ Finally, there is also time slicing. If time slices are defined as $t$ units, ev
 
 Processes tend to alternate periods of computing with input/output requests. These tend to alternate, so for a while the CPU does a lot of work, called a \textit{CPU Burst}, and then it needs to do some I/O, and the period where it is waiting is called the \textit{I/O Burst}. After the I/O is completed, the CPU can go at it again. How much of each a process does allows for classification of the process into one of two categories.
 
-Processes that spend most of their time computing are called \textit{CPU-Bound} and the limiting factor in their execution is how fast the CPU executes the code. Complex mathematical equations, for example, require a lot of CPU time. They can speed up significantly if you get a faster CPU. The alternative is a process that spends most of its time waiting for I/O, which we call \textit{I/O Bound}. In this case, having a faster CPU will not make the difference in how long it takes to execute the program. See the diagram below:
+Processes that spend most of their time computing are called \textit{CPU-Bound} and the limiting factor in their execution is how fast the CPU executes the code. Complex mathematical equations, for example, require a lot of CPU time. They can speed up significantly if you get a faster CPU. The alternative is a process that spends most of its time waiting for I/O, which we call \textit{I/O-Bound}. In this case, having a faster CPU will not make the difference in how long it takes to execute the program. See the diagram below:
 
 \begin{center}
 \includegraphics[width=0.75\textwidth]{images/cpu-io-bound.png}\\
 CPU usage diagram showing (a) a CPU-Bound process and (b) an I/O-Bound process~\cite{mos}.
 \end{center}
 
-Studies have been done to examinee the durations of CPU bursts. An I/O bound program will tend to have short CPU bursts, of course. Over time, CPUs have gotten faster at a rate much higher than the rate of I/O speedup. This is probably not surprising to you: a new CPU comes out every few months and they get faster. I/O standards like Serial-ATA and USB and such change very slowly, over the course of years. So it makes sense that over time programs tend towards being I/O bound. The results of the study are shown below:
+Studies have been done to examine the durations of CPU bursts. An I/O-Bound program will tend to have short CPU bursts, of course. Over time, CPUs have gotten faster at a rate much higher than the rate of I/O speedup. This is probably not surprising to you: a new CPU comes out every few months and they get faster. I/O standards like Serial-ATA and USB and such change very slowly, over the course of years. So it makes sense that over time programs tend towards being I/O-Bound. The results of the study are shown below:
 
 \begin{center}
 \includegraphics[width=0.65\textwidth]{images/cpu-burst-histogram.png}\\
 CPU-Burst histogram~\cite{osc}.
 \end{center}
 
-But what does this have to do with scheduling? There are two applications. The long term scheduler may attempt to keep a balance between CPU- and I/O-bound tasks to get the best resource utilization. This requires that the long term scheduler have some idea about which processes are which.
+But what does this have to do with scheduling? There are two applications. The long term scheduler may attempt to keep a balance between CPU- and I/O-Bound tasks to get the best resource utilization. This requires that the long term scheduler have some idea about which processes are which.
 
 Another is that if the disk is a common ``pinch point'', when the disk has nothing to do, the short term scheduler should immediately schedule a process that is likely to issue a disk request, so the disk is kept as busy as possible.
 
@@ -104,7 +104,7 @@ We will examine the following scheduling criteria~\cite{osi}:
 
 \paragraph{Priorities.} Processes can be assigned priorities: a way of saying that this process is more or less important compared to others. Scheduling should respect this, within reasonable limits. The highest priority process should probably run most often, but it should not always be the one selected, as that would violate the principle of fairness.
 
-\paragraph{Balancing Resources.} We will get a better outcome if we balance resource usage. The example mentioned about applies: we would like to choose some CPU-Bound and I/O-Bound processes so both the CPU and I/O are kept busy. If we have more information about what sort of I/O the processes will need, so much the better: we can choose a process that will use the printer if run, when we know the printer is idle, and avoid choosing a process that will use the network if we know the network is busy.
+\paragraph{Balancing Resources.} We will get a better outcome if we balance resource usage. The example mentioned above applies: we would like to choose some CPU-Bound and I/O-Bound processes so both the CPU and I/O are kept busy. If we have more information about what sort of I/O the processes will need, so much the better: we can choose a process that will use the printer if run, when we know the printer is idle, and avoid choosing a process that will use the network if we know the network is busy.
 
 \subsubsection*{Scheduling Algorithm Goals}
 
@@ -132,7 +132,7 @@ The priorities of these different goals depend significantly on the kind of syst
 
 \subsection*{The (Ab)use of Priorities}
 
-Okay, so we've said that processes have priorities and we've repeatedly references priority as being an important consideration in various operations like scheduling and page allocation and so on. We have not yet actually talked much about priorities.
+Okay, so we've said that processes have priorities and we've repeatedly referenced priority as being an important consideration in various operations like scheduling and page allocation and so on. We have not yet actually talked much about priorities.
 
 Each process's priority is typically an integer. Whether higher numbers are higher priority or lower numbers are higher priority is a question of system design. As is typical, if there are two ways to do something, some people will choose one way and some will choose the other. In UNIX, a lower number is higher priority; Windows is the opposite. Picking a convention and sticking to it would be nice, but there we are.
 
