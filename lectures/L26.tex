@@ -29,7 +29,7 @@ The OS may maintain data about each process to be used in making decisions about
 	\item The total time of execution.
 \end{enumerate}
 
-The first two criteria in the list can easily be measured, but the their one must be estimated or supplied by the user. Old batch systems did sometimes ask users to provide an estimate of how long they thought a task was likely to take. If the user underestimated, then execution would be halted at the time they said, even if his or her operation was unfinished. But the higher the estimate, the lower the priority the task received; if too high the user task might never be scheduled to run at all. Operating systems do not ask the users in desktop systems to estimate how long a process will run, but supercomputers and other batch jobs may still consider this as a criterion.
+The first two criteria in the list can easily be measured, but the third one must be estimated or supplied by the user. Old batch systems did sometimes ask users to provide an estimate of how long they thought a task was likely to take. If the user underestimated, then execution would be halted at the time they said, even if his or her operation was unfinished. But the higher the estimate, the lower the priority the task received; if too high the user task might never be scheduled to run at all. Operating systems do not ask the users in desktop systems to estimate how long a process will run, but supercomputers and other batch jobs may still consider this as a criterion.
 
 \subsection*{Highest Priority, Period}
 
@@ -58,7 +58,7 @@ The total time needed to complete all processes is 30 units. The average complet
 
 If $P_{1}$ arrived last instead, then the picture is somewhat different. It still takes 30 units of time to complete all processes, but the average completion time is $(3 + 6 + 30) / 3)$ = 13 units. Now this might make a big difference to the user: seeing processes 2 and 3 completed sooner will probably be viewed positively. Still, we consider it an undesirable thing that we have such a dramatic difference in how long $P_{2}$'s turnaround time is.
 
-FCFS as a scheduling algorithm also tends to favour CPU-bound processes rather than I/O bound processes. When a CPU-bound process is running, the I/O bound processes must wait in the queue like everybody else. This might lead to inefficient use of the resources; disk is slow so we would like to keep it busy at all times. If a disk write is completed and there is a process that would like to read something from disk, it would be ideal to issue that read straight away so the disk is constantly in use. With FCFS, however, the I/O devices are likely to suffer idle periods~\cite{osi}.
+FCFS as a scheduling algorithm also tends to favour CPU-Bound processes rather than I/O-Bound processes. When a CPU-Bound process is running, the I/O bound processes must wait in the queue like everybody else. This might lead to inefficient use of the resources; disk is slow so we would like to keep it busy at all times. If a disk write is completed and there is a process that would like to read something from disk, it would be ideal to issue that read straight away so the disk is constantly in use. With FCFS, however, the I/O devices are likely to suffer idle periods~\cite{osi}.
 
 The FCFS algorithm as it is generally described, is non-preemptive; a process that gets selected from the front of the queue runs until there is a reason to make the swap. So in theory, one process could monopolize the CPU (remember that some people are jerks). If we modify FCFS with periodic preemption, then we get a new system, Round Robin.
 
@@ -69,7 +69,7 @@ The principal issue is: how big should $t$ be? If $t$ is too long, then processe
 
 On the principle of ``don't guess; measure'' we could make a decision about the size of $t$ based on the patterns of the system. If we know that the typical process tends to run for $r$ units of time before getting blocked on I/O or something, then it would be logical to choose $t$ such that it is slightly larger than $r$. If $t$ is smaller than $r$, then processes will frequently be interrupted by the time slice. Processes that are going to use a lot of CPU will be split up over multiple time slices anyways, but it's frustrating if the process would take 1.1 time slices. If $t$ is larger than $r$, many processes will not run up against that time slice limit and will hopefully accomplish a useful chunk of work before getting blocked for I/O or some other reason. 
 
-Thinking about this further, Round Robin tends to favour CPU-bound processes. An I/O-Bound process spends a lot less time using the CPU. It runs for a short time, gets blocked on I/O, then when the I/O is finished, it goes back in the ready queue. So CPU-Bound processes are getting more of the CPU time.
+Thinking about this further, Round Robin tends to favour CPU-Bound processes. An I/O-Bound process spends a lot less time using the CPU. It runs for a short time, gets blocked on I/O, then when the I/O is finished, it goes back in the ready queue. So CPU-Bound processes are getting more of the CPU time.
 
 Round Robin can be improved to Virtual Round Robin to address this unfairness. It works like Round Robin, but a process that gets unblocked after I/O gets higher priority. Instead of just rejoining the general queue, there is an auxiliary queue for processes that were previously blocked on I/O. When the scheduler is choosing a process to run, it takes them from the auxiliary queue if possible. If a process simply ran up against the time limit, it goes into the regular ready queue instead. If dispatched from the auxiliary queue, it runs for up to the as-yet-unused fraction of a slice~\cite{vrr}.
 
@@ -103,7 +103,7 @@ The problem is predicting the CPU burst times. The best thing we may be able to 
 $S_{n+1} = \frac{1}{n}\displaystyle\sum_{i=1}^{n}T_{i}$
 \end{center}
 
-where: $T_{i}$ is the burst time for the $i$th instance of this process; $S_{i}$ is the predicted value for the $i$th instance; and $S_{1}$ is a guess at the first value (not predicted, because we have no data to go on at that point). Instead of picturing it as a sum each time, we can jut modify the equation to just update the value:
+where: $T_{i}$ is the burst time for the $i$th instance of this process; $S_{i}$ is the predicted value for the $i$th instance; and $S_{1}$ is a guess at the first value (not predicted, because we have no data to go on at that point). Instead of picturing it as a sum each time, we can modify the equation to just update the value:
 
 \begin{center}
 $S_{n+1} = \frac{1}{n}T_{n} + \frac{n - 1}{n} S_{n}$
@@ -123,7 +123,7 @@ Thus, the older the observation, the less it is counted in the average. The larg
 \end{center}
 
 
-We might give an estimate of $S_{1} = 0$ to start with, which gives new priorities a process and a chance to get started. After they have started and run a bit, we will have some data. But first we have to give them a chance.
+We might give an estimate of $S_{1} = 0$ to start with, which gives new processes priority and a chance to get started. After they have started and run a bit, we will have some data. But first we have to give them a chance.
 
 \begin{center}
 \includegraphics[width=0.7\textwidth]{images/sjf-2.png}\\
