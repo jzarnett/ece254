@@ -18,7 +18,7 @@ Jobs with a small $s$, i.e., short jobs, are likely to get scheduled quickly, wh
 
 We still need to have some way of estimating $s$, which may or may not be simple guessing. 
 
-\subsection*{Multilevel Queue}
+\subsection*{Multilevel Queue (Feedback)}
 For the most part, until now, we have treated processes more or less equally (except when we have taken the highest priority process). While it might seem very fair, it may not be ideal for a situation where processes behave differently. A desktop or laptop has many processes running, some of which are visible to the user (foreground, or interactive processes) and some of which are not (background and batch processes). We could then apply different scheduling algorithms to different types of process.
 
 The multilevel queue takes the ready queue and breaks it up into several queues. A process can be in one (but only one) of the queues and it is assigned to the queue based on some attribute of the process (priority, memory needs, foreground/background, et cetera). The foreground queue, for example, could be scheduled by Round Robin, and the background by First-Come, First-Served~\cite{osc}.
@@ -29,6 +29,8 @@ An example of this was the CTSS (Compatible TimeSharing System) that ran on the 
 
 Like a few schemes, we have seen so far, this is a ratchet: a process can move down in the priority list, but there does not appear to be a way for it to move up. So a process that needed a lot of CPU early on was going to be punished ``forever''. The designers of the system assumed that if the user pressed the Enter key, it might be a sign the process was likely to become interactive (and therefore should move up in priority). Some genius user (there's always one), figured out that by pressing the enter button repeatedly, his long running processes would finish faster. This was a bit unfair; his processes got priority over the others. But things really broke down when this individual decided to be nice: he told all his friends. And suddenly everyone was doing it and the benefit of the system was lost~\cite{mos}.
 
+This scheduling algorithm may also be referred to as \textit{feedback}. We do not have any information in advance about how long various processes will be. Instead of being concerned with how much CPU time will be used, which requires clairvoyance or guessing, we assign priority based on the amount of CPU time assigned so far. A process that has used a lot of CPU so far gets lower priority.
+
 \subsection*{Guaranteed Scheduling}
 
 And now for something completely different. The idea behind guaranteed scheduling is to promise the users something and then fulfill that promise. We could promise that if there are $n$ users, each gets an equal share (1/$n$) of the CPU time. Or with $m$ processes, each process gets 1/$m$ of the CPU time.
@@ -37,24 +39,31 @@ To make this happen, the system must keep track of how much CPU time each proces
 
 \subsection*{Lottery}
 
+The lottery is a system to give predictable results with a simple implementation. The premise is that every process gets some number of ``lottery tickets'' for each resource (e.g., CPU). When a decision has to be made, a lottery ticket is selected at random. The process that holds that ticket gets that resource. This system provides some clarity; if a process has priority $p$, what does that mean? If a process has a fraction $f$ of the total tickets, then we can expect that process to get about $f$\% of the resource. When a process is created or terminates this may increase or decrease the number of tickets, or result in their redistribution~\cite{mos}. 
 
-\subsection*{Feedback}
+More important processes are given more tickets and have, therefore, a higher chance of winning. If there are 100 tickets outstanding, if a process has 25 of them, it has a 25\% chance of winning any given draw. To increase a process's chance of winning, give it more tickets. To decrease it, give it fewer. Unlike in the real lottery, though, there is always a winner. There are no ``unpurchased'' tickets and we can choose only a ticket that someone is holding.
 
+Co-operating processes may be permitted to exchange tickets. A client that sends a request to a server might then give all its tickets to the server, increasing the chance the server gets the resources to run next~\cite{mos}.
 
-\section*{Real Time Scheduling}
-
-The discussion above tends to be suitable for regular systems, but unsuitable for real-time systems; those in which there are deadlines and consequences (whether severe or lesser) for failing to complete tasks before those deadlines.
-
-\subsection*{Earliest-Deadline First}
-
-\cite{mte241}
+This is a lot less overhead than guaranteed scheduling. We do not have to keep track of how much of the resource a process has received. Assuming that the lottery system is sufficiently random, over time the resource allocation will tend towards the proportions of the tickets each process holds. If process $A$ has 20\% of the tickets, $B$ has 30\%, and $C$ has 50\%, then the CPU will be given to the processes in approximately a 20:30:50 ratio, as expected. Of course, random number generation is a small struggle for computers, though the complexity of this is not something we want to examine here.
 
 
 \section*{The Idle Task}
 
-Sometimes our scheduling algorithm cannot produce a new process to run next because there is, quite frankly, nothing to do. 
+Sometimes our scheduling algorithm cannot produce a new process to run next because there is, quite frankly, nothing to do. The actual implementation of the idle thread may vary across different systems. In some cases it is just repeatedly invoking the scheduler; in others it does a bit of useless addition; or it might just be a whole bunch of \texttt{NOP} instructions. With truly nothing to do, the CPU can be told to halt or switch to a lower power state. Whatever it actually ``does'', the idle thread never has any dependencies on anything else and is always ready to run.
 
-\section*{Bumping the Priority}
+Since the idle thread does not necessarily do much, why have it? It prevents having special cases in the scheduler, first of all. It also provides some accounting information about how much of the time the CPU is not doing anything. In fact, a lot of the time on the desktop or laptop, task manager will tell you that ``System Idle Process'' is taking up a large percentage of the CPU. Because you are more intelligent than a certain technology journalist who may or may not be named John Dvorak, you will recognize that this just means the CPU is not doing anything; it does not mean that some mysterious system process is using up all your CPU's time.
+
+Saving power by shutting down (parts of) the processor seems like a nice savings of energy (and potentially increases battery life). On the other hand, time when the CPU is doing nothing might potentially be put to use. There are usually some accounting and housekeeping tasks that the CPU can be doing when it has nothing else. For example, the OS could collect statistical data, or defragment the hard drive (something we will look at).
+
+
+\section*{Queueing Analysis (or: Oh no! Math!)}
+Given the various scheduling routines, we can do an analysis of the effectiveness of some of them. We will assume that processes arrive according to a Poisson distribution (that is to say, they arrive randomly... let's not get dragged into a debase about the various distributions), and we have exponential service times. 
+
+
+
+
+
 
 \input{bibliography.tex}
 
