@@ -2,7 +2,7 @@
 
 \begin{document}
 
-\lecture{ 27 --- Scheduling Algorithms, Continued }{\term}{Jeff Zarnett}
+\lecture{ 27 --- Scheduling, Idling, Priorities, and Queues }{\term}{Jeff Zarnett}
 
 \section*{Scheduling Algorithms, Continued}
 
@@ -56,14 +56,37 @@ Since the idle thread does not necessarily do much, why have it? It prevents hav
 
 Saving power by shutting down (parts of) the processor seems like a nice savings of energy (and potentially increases battery life). On the other hand, time when the CPU is doing nothing might potentially be put to use. There are usually some accounting and housekeeping tasks that the CPU can be doing when it has nothing else. For example, the OS could collect statistical data, or defragment the hard drive (something we will look at).
 
+\section*{Bumping the Priority}
+Sometimes we get into a situation called a \textit{priority inversion}. This is what happens when a high priority process is waiting for a low priority process. Suppose that $P_{1}$ is high priority and is blocked on a semaphore, while $P_{2}$ is in its critical section. As $P_{2}$ is low priority, it might be a long time before $P_{2}$ is selected again to run and can finish and exit the critical section. So $P_{1}$ cannot run, because it is blocked, and it could be blocked for a very long time. In the meantime, other processes with lower priority than $P_{1}$ (but higher than $P_{2}$) carry on execution. Having $P_{1}$ waiting for the lower priority processes is rather undesirable.
+
+The solution is \textit{priority inheritance}. The right thing to do is to bump up the priority of $P_{2}$, temporarily, to be equal to that of $P_{1}$, so that $P_{1}$ can be unblocked as quickly as possible. To generalize, a lower priority process should inherit the higher priority if a higher priority process is waiting for a resource the lower priority process holds. So $P_{2}$ will get selected, will execute and exit the critical section. Its priority then falls down to normal, meaning $P_{1}$ will be selected and may continue.
+
+A famous case of priority inversion took place on the Mars Pathfinder rover. In short, a low priority task would acquire a semaphore, locking the information bus. A high priority task also needed that bus. There was, finally, a medium priority task for communication, which ran for a long time. If the low priority task had the bus, the high priority task was blocked; the medium priority task would be selected to run. While that happened, the low priority task could not finish and release the semaphore. Accordingly, the high priority task was stuck waiting. After a specified period of time, the system assumed the high priority task was stuck and its deadlock resolution strategy was armageddon: total system reboot (resulting in the loss of some data). 
+
+The Pathfinder solution was to enable priority inheritance on the information bus semaphore. This meant that the low priority task would get a higher priority than the communication task and would run to completion; then the high priority task would be able to run and the system would not assume a deadlock had occurred. It was, to a certain extent, fortunate that this option was built into the system at all and needed only to be turned on. Doing a major software update on a system that is located \textit{on another planet} is not quite the same as installing Windows updates on Patch Tuesday.
+
+
 
 \section*{Queueing Analysis (or: Oh no! Math!)}
 Given the various scheduling routines, we can do an analysis of the effectiveness of some of them. We will assume that processes arrive according to a Poisson distribution (that is to say, they arrive randomly... let's not get dragged into a debase about the various distributions), and we have exponential service times. 
 
 
+Note that any scheduling relationship that chooses the next item without caring how long it will run (the expected service time) obeys this relationship~\cite{osi}:
 
+\begin{center}
+	$\dfrac{T_{r}}{T_{s}} = \dfrac{1}{1 - \rho}$
+\end{center}
 
+where: $T_{r}$ is the turnaround time (waiting plus execution); $T_{s}$ is the service time (average time in running state); and $\rho$ is the processor utilization.
 
+This includes priority-scheduling, where the priority is assigned by some means other than based on their (predicted or known) execution times. If we do make a distinction based on the expected service times, then we get some meaningful results. In our scenario, we will have two different priority classes (``high'' and ``low'', how exciting) with different service times. Preemption, in this context, means that a low priority process will be interrupted as soon as a higher priority process is ready. See the table below:
+
+\begin{center}
+	\includegraphics[width=\textwidth]{images/queue-formulae.png}\\
+	Formulae for Single-Server Queues with Two Priorities~\cite{osi}.
+\end{center}
+
+Let us assume we have an equal number of arrivals between high and low priorities and that low priority tasks take about five times as long as high priority tasks.
 
 \input{bibliography.tex}
 
