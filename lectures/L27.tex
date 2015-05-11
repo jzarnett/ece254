@@ -86,7 +86,39 @@ This includes priority-scheduling, where the priority is assigned by some means 
 	Formulae for Single-Server Queues with Two Priorities~\cite{osi}.
 \end{center}
 
-Let us assume we have an equal number of arrivals between high and low priorities and that low priority tasks take about five times as long as high priority tasks.
+Let us assume we have an equal number of arrivals between high and low priorities and that low priority tasks take about five times as long as high priority tasks. Let us look at the overall result, and then break it down into the response times for shorter processes and longer processes.
+
+\begin{center}
+	\includegraphics[width=0.63\textwidth]{images/overall-response-time.png}\\
+	Overall normalized response time~\cite{osi}.
+\end{center}
+
+\vspace{-2em}
+
+\begin{center}
+	\includegraphics[width=0.63\textwidth]{images/shorter-response-time.png}\\
+	Shorter process normalized response time~\cite{osi}.
+\end{center}
+
+\vspace{-2em}
+
+\begin{center}
+	\includegraphics[width=0.63\textwidth]{images/longer-response-time.png}\\
+	Longer process normalized response time~\cite{osi}.
+\end{center}
+
+\paragraph{Simulation Modelling.} Rather than just guessing about what strategy of scheduling is most effective, let us do some studies. A simulation as described in~\cite{fink} involved 50~000 processes with an arrival rate of $\lambda = 0.8$ and $T_{s} = 1$. Thus the assumption is that processor utilization $\rho$ is also 0.8. Each process is grouped into service time percentiles of 500 processes. The 500 processes with the shortest service times make the first percentile, and so on. Let us see the turnaround and waiting times, according to the simulation:
+
+\begin{center}
+	\includegraphics[width=0.85\textwidth]{images/turnaround-time.png}\\
+	Turnaround time simulation result~\cite{osi}.
+\end{center}
+
+\begin{center}
+	\includegraphics[width=0.85\textwidth]{images/wait-time.png}\\
+	Waiting time simulation result~\cite{osi}.
+\end{center}
+
 
 \input{bibliography.tex}
 
