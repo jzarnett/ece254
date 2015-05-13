@@ -41,7 +41,7 @@ The term ``thread'' is a short form of \alert{Thread of Execution}.
   
   Threads also have some state and stores some local variables.
   
-  Most programs you will write in other courses had only one thread;\\
+  Most programs you will write in other courses have only one thread;\\
   \quad that is, your program's code is executed one statement at a time.
 
 \end{frame}
@@ -205,9 +205,9 @@ Five state model, once again:
 
 The transitions work the same way as the state transitions for a process. 
 
-As with a process, a thread in any state can transition to terminated. W
+As with a process, a thread in any state can transition to terminated.
 
-hen a process is terminated, all its threads are terminated\\
+When a process is terminated, all its threads are terminated\\
 \quad Regardless of what state it is in.
 
 Actually, let's take a minute to look at cancellation...
@@ -309,7 +309,7 @@ It is the responsibility of the library/application to manage threads.
 \begin{frame}
 \frametitle{User Level Threads}
 
-There are three advantages to using user-level threads~\cite{osi}:
+There are three advantages to using user-level threads:
 \begin{enumerate}
 	\item Thread switches do not require kernel mode privileges.
 	\item Scheduling can be something the program decides.
