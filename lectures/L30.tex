@@ -86,14 +86,46 @@ Recall from much earlier the idea of kernel mode and user mode instructions; som
 In certain circumstances, for performance reasons, we might want to allow direct access. In the case of a game, for example, we want to allow the game to work directly on the graphics card's memory (despite the fact that it is an I/O device). Mediating every access through the kernel would result in unacceptably poor performance (which is to say, the other team would totally call us noobs). So a section of graphics memory, corresponding to a particular window on the screen, will be locked by the kernel to be accessible by the game's process~\cite{osc}.
 
 \subsection*{Kernel I/O Data Structures}
+The kernel must, as is rather obvious, keep track of what I/O devices are in use by which processes and the general state of the I/O device (``PC Load Letter''). The diagram below gives some indication of what the UNIX kernel structures are like for open files:
 
 \begin{center}
-	\includegraphics[width=0.6\textwidth]{images/unix-io-kernel.png}\\
+	\includegraphics[width=0.7\textwidth]{images/unix-io-kernel.png}\\
 	The UNIX structures to manage I/O~\cite{osc}.
 \end{center}
 
 \subsection*{I/O Scheduling}
 
+As a final note, we sometimes want to schedule I/O requests in some order other than First-Come, First-Served. A simple analogy: Imagine you need to go to the grocery store, the dry cleaners, and the bank. The bank is located 1~km to the west of your current location, and the grocery store is 3~km west. The dry cleaners is in the same plaza as the grocery store. It is obvious that it would be fine to go to the bank, then the dry cleaners, then the grocery store, but not to go to the dry cleaners, then the bank, then the grocery store. The unnecessary back-and-forth wastes time and energy (whether walking or fuel depends on your mode of transportation).
+
+Clearly, the operating system will want to do something similar with I/O requests. It will maintain a structure of requests and can then re-arrange them to be accomplished most efficiently. The literature sometimes refers to this as a queue but... is it really a queue when it does not exhibit the first-in, first-out behaviour\footnote{But I'm kind of strict about my use of grammar and language. Things like ``10 items or less'' signs bother me, because I know it should be ``10 items or \textbf{fewer}''. For those who are fans of \textit{Game of Thrones}, it will probably not surprise you that I like Stannis Baratheon.}? This will, naturally, have some limits: requests should presumably get scheduled before too much time has elapsed even if it would be ``inconvenient''. It might also take priority into account, dealing with the I/O requests of a high priority process even if they are not particularly nearby to other requests. 
+
+In particular, this is important when examining hard disk drive operation. And that will therefore be the next subject we will consider.
+
+\section*{Transforming I/O Requests to Hardware Operations}
+
+In the previous section we discussed the idea of taking a command like \texttt{read} and said it is the job of the device driver to translate this command into a hardware operation. Reading from the file system on disk, for example, requires a few steps. If I want to open a file like \texttt{example.txt}, the file system (not yet discussed) will associate this file with some information about where on the disk this is (a set of disk blocks representing the file). Then, to read the file, \texttt{read} commands can be issued to get those blocks into memory so I can edit it with \texttt{vi}.
+
+The diagram below shows the life cycle of an I/O request:
+
+\begin{center}
+	\includegraphics[width=0.65\textwidth]{images/io-lifecycle.png}\\
+	The life cycle of an I/O request~\cite{osc}.
+\end{center}
+
+In general, the life cycle follows some ten steps from start to finish~\cite{osc}:
+
+\begin{enumerate}
+	\item A process issues a \texttt{read} command (assume the file is already open).
+	\item The system call routine checks the parameters for correctness. If the data is in a cache or buffer, return it straight away.
+	\item Otherwise, the process is blocked waiting for the device and the I/O request is scheduled. When the operation is to take place, the I/O subsystem tells the device driver.
+	\item The device driver allocates a buffer to receive the data. The device is signalled to perform the I/O (usually by writing into device-control registers or sending a signal on a bus).
+	\item The device controller operates the hardware to do the work.
+	\item The driver may poll for status, await the interrupt when finished, or for the DMA controller to signal it is finished.
+	\item The interrupt handler receives the interrupt and stores the data; it then signals the device driver to indicate the operation is done.
+	\item The device driver identifies what operation has just finished, determines the status, and tells the I/O subsystem it is done.
+	\item The kernel transfers the data (or error code or whatever) to the address space of the requesting process, and unblocks that process.
+	\item When the scheduler chooses that process, it resumes execution.
+\end{enumerate}
 
 \input{bibliography.tex}
 
