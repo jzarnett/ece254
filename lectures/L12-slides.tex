@@ -20,7 +20,7 @@
 
 The earlier definition of mutual exclusion was informal.
 
-There additional desirable properties that will be used to evaluate any solution:
+There are additional desirable properties that will be used to evaluate any solution:
 \begin{itemize}
 	\item Mutual exclusion must apply.
 	\item A thread that halts outside the critical section must not interfere with other threads.
@@ -117,7 +117,7 @@ It can be initialized to 0 or to 1.
 
 The semaphore has two operations: \texttt{wait} and \texttt{signal}. 
 
-In the original paper, \texttt{wait} was called \texttt{P} and \texttt{wait} was called \texttt{V}, but the names in common usage have become a little more descriptive. 
+In the original paper, \texttt{wait} was called \texttt{P} and \texttt{signal} was called \texttt{V}, but the names in common usage have become a little more descriptive. 
 
 Note: \texttt{signal} is also called \texttt{post} in many textbooks.
 

@@ -48,7 +48,7 @@ The operating system does not usually give much thought to whether it is a conve
 The common English usage of the word ``synchronization'' refers to making two or more things happen at exactly the same time. 
 
 Synchronization in the computer sense is more general:\\
-\quad Somee relationship between events: before, during, after~\cite{lbs}. 
+\quad Some relationship between events: before, during, after. 
 
 \end{frame}
 
@@ -131,7 +131,7 @@ The formal, strict definition of concurrent is: two events are concurrent if we 
 
 In common parlance, when we say something happened concurrently, it means they happened at the same time (Alice and Bob both had lunch at 12:00). 
 
-Cncurrency is not the same as saying that they happened at the exact same time; it's saying that we do not know (and cannot guarantee) an order of events. 
+Concurrency is not the same as saying that they happened at the exact same time; it's saying that we do not know (and cannot guarantee) an order of events. 
 
 It's possible that Alice had lunch at 12:00 and Bob had lunch at 13:00 or they both ate at 12:00 or Alice had lunch at 13:30 and Bob had lunch at 12:15. 
 
@@ -438,7 +438,7 @@ These are two distinct steps: read of \texttt{busy} and write of \texttt{busy}.
 
 A process switch could occur between the read and the write.
 
-Tthen threads $A$ and $B$ will both be in the critical section at the same time! 
+Then threads $A$ and $B$ will both be in the critical section at the same time! 
 
 This solution is also not satisfactory.
 
