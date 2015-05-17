@@ -63,9 +63,17 @@ Windows, for example, uses locking and any file that is open in some program can
 
 \subsection*{File Types}
 
-\subsection*{File Structure}
+Files we are familiar with often have extensions separated from the file name by a period, like \texttt{fork.txt}. The \texttt{txt} extension tells us some information about the file, i.e. that it is a text file. These things are mostly hints to the OS or user about what sort of file it is. In most operating systems, any program can open arbitrary files... that it has a \texttt{.docx} extension is only a suggestion that it should be opened by a word processing program, but nothing stops people from opening it in any other program. OSes typically allow setting a default program for the extension: e.g., always open \texttt{.docx} files with LibreOffice.
 
 \subsection*{Access Methods}
+
+When the system wants to operate on a file, it is usually read into main memory. We often have several options if we are dealing with a hard disk drive where we can read from or write to anywhere. 
+
+Locating an offset inside a file can be a pain for an operating system. Disk systems operate on blocks of equal size, but the logical size of the file probably does not fit exactly into a block (or an integer multiple of blocks). So we often have multiple logical records packed into one block. As far as UNIX is concerned, any byte of a file can be accessed, but if the disk uses 4~KB blocks, the file system will need to pack bytes into and out of the physical blocks to make it work~\cite{osc}.
+
+Because disk space is allocated in a block, there is some internal fragmentation inherent to the system. If a file is, say, 21~KB, it will fit in 5 of the 4~KB blocks and a fifth block will be allocated that contains the last 1~KB but has 3~KB of internal fragmentation (wasted space).
+
+
 
 \input{bibliography.tex}
 
