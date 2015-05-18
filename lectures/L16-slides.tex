@@ -162,7 +162,7 @@ If the former, then we have once again only reduced the likelihood that deadlock
 \begin{frame}
 \frametitle{Stay Alert, Stay Safe}
 
-Alternative: ach process will need to give the operating system some additional information about what resources might be requested. 
+Alternative: each process will need to give the operating system some additional information about what resources might be requested. 
 
 Processes need to say in advance of execution what is the maximum number of resources of each type they might conceivably need. 
 
@@ -202,7 +202,7 @@ Hence why we needed to know in advance the maximum resources that could be requi
 
 More formally, there must exist a \alert{safe sequence}.
 
-A sequence of processes $<P_{1}, P_{2}, ... P_{n}$ is a safe sequence if the current allocation state if:
+A sequence of processes $<P_{1}, P_{2}, ... P_{n}$ is a safe sequence in the current allocation state if:
 
 For each $P_{i}$ the resource requests that $P_{i}$ can still make can be satisfied by the currently available resources plus resources held by $P_{j}$ where $j < i$. 
 
