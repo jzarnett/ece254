@@ -67,13 +67,87 @@ Files we are familiar with often have extensions separated from the file name by
 
 \subsection*{Access Methods}
 
-When the system wants to operate on a file, it is usually read into main memory. We often have several options if we are dealing with a hard disk drive where we can read from or write to anywhere. 
+When the system wants to operate on a file, it is usually read into main memory. We often have several options if we are dealing with a hard disk drive where we can read from or write to anywhere. But this is not the only way.
+
+\textit{Sequential access} is the simplest method. Information in the file is processed in order, one section after another. Compilers tend to operate in this way, for example. Reads and writes make up most of the operations; the operations may look something like \texttt{read\_next} which advances and reads from the next record. It is possible that going backwards is allowed, either by resetting to the beginning or ``reversing'' by some number of records (possibly 1). This access method stems from tape drive systems. We could advance or reverse the tape one section at a time (and it was not THAT long ago that tape drives were used for large data backups)~\cite{osc}.
+
+The normal kind of access we are used to in dealing with files is called \textit{direct access}. It is exactly what you expect: any part of a file can be accessed at any time. There are no restrictions on the order and no need for the program to seek around to the right place. Rather than reading the next block or advancing to the next block, we can usually read from or seek to an arbitrary block. 
+
+The operating system typically hides the underlying physical block information by using a relative block number. From the perspective of the application or user, the first block of the file is numbered zero, the next one is one, and so on. This may, however, have no underlying relation to where a block is located on disk.
 
 Locating an offset inside a file can be a pain for an operating system. Disk systems operate on blocks of equal size, but the logical size of the file probably does not fit exactly into a block (or an integer multiple of blocks). So we often have multiple logical records packed into one block. As far as UNIX is concerned, any byte of a file can be accessed, but if the disk uses 4~KB blocks, the file system will need to pack bytes into and out of the physical blocks to make it work~\cite{osc}.
 
 Because disk space is allocated in a block, there is some internal fragmentation inherent to the system. If a file is, say, 21~KB, it will fit in 5 of the 4~KB blocks and a fifth block will be allocated that contains the last 1~KB but has 3~KB of internal fragmentation (wasted space).
 
+\subsection*{Directories}
 
+A directory is really just a symbol table that translates file names (user-readable representations) to their directory entries. A directory should support several common operations~\cite{osc}:
+
+\begin{enumerate}
+	\item \textbf{Search}. We want to be able to find a file, and searching is typically not just on the file name but may include the contents of files as well, if their content is human-readable data.
+	\item \textbf{Add a File}. Add a file to the directory.
+	\item \textbf{Remove a File}. Remove a file from the directory.
+	\item \textbf{List a Directory}. List the files of the directory and the contents of the directory entry.
+	\item \textbf{Rename a File}. Change the user-friendly file name, possibly changing the file's position in the directory if it is sorted by name.
+	\item \textbf{Navigate the File System}. It should be possible to open subdirectories, go to parent directories, and so on.
+\end{enumerate}
+
+There are some simple file systems where there are no such things as subdirectories, but they don't really require any examination. Textbooks may also bring up a structure where each user has his or her own directly but cannot have subdirectories either. Also rather uninteresting. The kind of directory we are most familiar with is tree-structured: there it a root directory, and every file in the system has a unique name when the name and path to it (from the root) are combined.
+
+In UNIX the root directory is just called \texttt{/} (forward slash) and from there we can navigate to any file. If we would like to run the \texttt{ls} command, we will find it in the \texttt{bin} directory as \texttt{/bin/ls}. This is an example of an absolute path. Most of the time we do not have to use the absolute path (the full file name); a relative path (the path from the current directory) will suffice. As an example, if you want to compile something with a command like \texttt{gcc code/example.c}, the file \texttt{example.c} is in a subdirectory of the current directory called \texttt{code} and the system will work out that we need to start from the current directory (e.g., \texttt{/home/jz/ece254/}) and prepend that to the given file name, to produce the absolute path of \texttt{/home/jz/ece254/code/example.c}.
+
+OS designers have to make a choice about deletion of directories, if a directory is not empty. If it is empty, just removing the directory is enough. If it contains some files, either the system can refuse to delete the directory until it is empty, or automatically delete the files and subdirectories in the system in their entirety. Also, what does it mean to delete a file or folder? In modern operating systems, the delete command sometimes does not necessarily actually delete the file or folder, but instead moves it to some deleted files directory (recycle bin, trash can, whatever you want to call it). If it is deleted from there then it is really gone, but while it is in that deleted file directory it can be restored.
+
+File systems may also support the sharing of files: there is one copy of the file but it has more than one name. In UNIX this concept is called a \textit{link} and this is effectively a pointer to another file. Links are either ``hardlinks'' or ``symlinks''. 
+
+Symlinks, or symbolic links, are just references by file name. So if a symbolic link is created to a file like \texttt{/Users/jz/file.txt}, the symbolic link will just be a ``shortcut'' to that file. If the file is later deleted, the symbolic link is left pointing to nothing. A future attempt to use this pointer will result in an error, so it is something to check on. It would be expensive, though possible, to search through the file system to find all links and remove them.
+
+Creating a hardlink means creating a second pointer to the underlying file in the file system. If a hardlink exists and the user deletes that file, the file still remains on disk until the last hardlink is removed. We will see later on, when we examine the file system implementation, how this actually works, but the short answer is: reference counting. The file structure maintains a count of how many hardlinks reference a file, and it is only really deleted if the count falls to zero.
+
+\subsection*{File Permissions}
+To protect users from one another and to maintain the confidentiality and integrity of data, files usually have some permissions associated with them, which may control access to the following operations~\cite{osc}:
+
+\begin{enumerate}
+	\item Read
+	\item Write
+	\item Execute
+	\item Append (write at the end of the file)
+	\item Delete
+	\item List (view the attributes of the file)
+\end{enumerate} 
+
+\paragraph{UNIX-Style Permissions.}
+UNIX-Style permissions are commonly used still today in a lot of UNIX and UNIX-like systems. Each file has an owner and a group, and a set of permissions that can be assigned for the owner, the group, and for everyone. There are three basic permissions: read, write, and execute (run as a program). The permissions are represented using 10 bits, where a 1 indicates true and a 0 indicates false. The first bit is the directory bit and indicates if the file being examined is actually a directory. The next three bits are the read, write, and execute bits for the owner, followed by the read, write, and execute bits for the group, and finally the read, write, and execute bits for everyone.
+
+Effective permissions are determined by the user: the owner of the file gets the owner permissions even if different permissions are assigned to the group or everyone. Precedence goes from left to right: owner takes precedence over the group; group takes precedence over the permissions for everyone.
+
+The permissions can be shown to the screen in a human-readable format which is ten characters long. The order is always the same, and so a dash (\texttt{-}) appears if a bit is zero (permission does not exist). The character \texttt{d} is used to indicate a directory, \texttt{r} to indicate read access, \texttt{w} to indicate write access, and \texttt{x} to indicate execute access.
+
+Example: permissions of \texttt{-rwxr{-}{-}{-}{-}{-}} indicate that a file is not a directory; the owner can read, write, and execute; other members of the group can read it only, and everyone else has no access to the file (cannot read, write, or execute). 
+
+Permissions can also be written in octal (base 8) where r = 4, w = 2, and x = 1. To get the octal representation, start with 0, and then add the value of the  permissions that are present, using zero where permissions are absent. You might then have a permission that reads \texttt{750} - meaning that the owner has read, write and execute access (0 + 4 + 2 + 1 = 7); group members have read and execute access (0 + 4 + 0 + 1 = 5); everyone else has no access to it at all.
+
+There are some more details like what the permissions mean on directories, and some advanced topics like \texttt{setuid}, \texttt{setgid}, and ``sticky bit'', but we will not cover them in this course.
+
+The obvious shortcoming of this approach is that it is very coarse-grained: there are only three groups for whom we can specify permissions. Within Linux and other similar systems there is a trend now towards using SELinux (Security Enhanced Linux) which is an Access Control List system.
+
+\paragraph{Access Control Lists.}
+In SELinux and NTFS (Windows NT File System), files are protected by Access Control Lists. In such a system, each file can have as many security descriptors as we like, in which we specify the permissions a specific user or group is supposed to have. Similarly, the list of permissions need not be restricted to read-write-execute; NTFS, for example, has several different permissions such as ``Take Ownership''.
+
+In NTFS, you can see the security descriptors for a file rather easily by right clicking it in Explorer, opening the properties dialog, and choosing the security tab. The descriptors have two checkboxes: allow and deny, with deny taking precedence over allow.
+
+Permissions can start out at ``default deny'', in which case only the users explicitly granted access may access the file, or ``default permit'' in which case everyone has access, minus those users whose privileges are explicitly denied. Default deny is obviously more secure.
+
+A simple way to represent an access control list is a set of tuples listing the users and permissions. For example:
+\begin{verbatim}
+	(alice, read)
+	(bob, read)
+	(charlie, read)
+	(charlie, write)
+	(bob, execute)
+\end{verbatim}
+
+Access Control Lists have a complexity that the UNIX file permissions do not: the idea of inheritance. We'll examine, briefly, inheritance in NTFS. Inheritance is supposed to be a convenience feature, but it can often be a cause of problems. If there is a directory with ACLs established and object inheritance is enabled, then any new file crated in this directory will receive the same ACL of the directory. The danger is that any existing file moved into the directory will retain its original ACL. If it is supposed to get the ACL of the directory, it needs to be explicitly set~\cite{ntfsacl}.
 
 \input{bibliography.tex}
 
