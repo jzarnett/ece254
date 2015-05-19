@@ -34,7 +34,7 @@ Rather than thinking about memory as just a pure address, we can think of it as 
 Segmentation hardware~\cite{osc}.
 \end{center}
 
-With segmentation, memory need longer be contiguous; we can allocate different parts of the program in different segments; different segments can be located in different areas of memory.
+With segmentation, memory need no longer be contiguous; we can allocate different parts of the program in different segments; different segments can be located in different areas of memory.
 
 \section*{Paging}
 Fixed and variable sized partitions suffer from fragmentation, whether external or internal. Let us divide memory up into small, fixed-size chunks of equal size, called \textit{frames}. Each process's memory is divided up into chunks the same size as a frame, called \textit{pages}. Then a page can be assigned to a frame. A frame may be empty or may have exactly one page in it. 
