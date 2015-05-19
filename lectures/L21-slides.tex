@@ -102,6 +102,7 @@ Memory accesses are such a common operation that we will need another rescue fro
 \frametitle{Segmentation: Contiguous}
 
 With segmentation, memory need longer be contiguous. 
+%This needs fixing: memory no longer need be contiguous?  Wording is same in lecture notes
 
 We can allocate different parts of the program in different segments. 
 
@@ -395,9 +396,9 @@ void swap( int *x, int *y ) {
 
 In the simplest form, the page table is just a standard table. 
 
-This structure is simple, but page tables can be very large. I
+This structure is simple, but page tables can be very large.
 
-f the system is 32-bit, and page sizes are 4~KB ($2^{12}$), then the page table has $2^{32}/2^{12} = 2^{20}$ pages, or about 1 million entries.
+If the system is 32-bit, and page sizes are 4~KB ($2^{12}$), then the page table has $2^{32}/2^{12} = 2^{20}$ pages, or about 1 million entries.
 
 \end{frame}
 

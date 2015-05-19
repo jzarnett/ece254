@@ -37,7 +37,7 @@ This level is a lot closer to the way the operating system thinks about memory: 
 \begin{frame}
 \frametitle{General Memory Allocation Interface}
 
-If we generalize this interface, we get two signatures~\cite{mte241}:
+If we generalize this interface, we get two signatures:
 
 \texttt{void *allocate\_memory( int size )}\\
 Allocate a block of \texttt{size} bytes of memory; return a pointer to the address of the first byte.
@@ -311,7 +311,7 @@ It is analogous to internal fragmentation, except of course the tiny fragments a
 \end{frame}
 
 \begin{frame}
-\frametitle{Eternal Fragmentation}
+\frametitle{External Fragmentation}
 
 One way to reduce external fragmentation is to increase internal fragmentation. 
 
@@ -370,9 +370,9 @@ Given a memory request of $N$, where do we allocate the memory?
 
 If there is no block of at least size $N$, the request cannot be satisfied. 
 
-If there is only one, the decision is easy. A
+If there is only one, the decision is easy.
 
-s long as memory has two free blocks of sufficient size ($N$ or more) that cannot be coalesced, a memory allocation request will require making a decision.
+As long as memory has two free blocks of sufficient size ($N$ or more) that cannot be coalesced, a memory allocation request will require making a decision.
 
 
 \end{frame}
