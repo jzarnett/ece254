@@ -1,0 +1,14 @@
+\input{header.tex}
+
+\begin{document}
+
+\lecture{ 33 --- File System Implementation }{\term}{Jeff Zarnett}
+
+\section*{File System Implementation}
+Now it is time to go behind the scenes of how the file system lives up to the interface we have just finished discussing. The implementation is somewhat complicated, and to keep the size of the problem manageable we will worry about storing files on hard disks. Hard disks themselves make a good choice for this: they are sufficiently large and sufficiently cheap, to start with, to store the data that we want to store. We can read an arbitrary part of the disk (unlike a tape). Finally, we can write to the same part of disk as many times as we want (disks don't, at least on the time frames that we are concerned about, wear out). Recall also that disks operate on blocks which, in their physical representation, comprise one or more sectors.
+
+
+
+\input{bibliography.tex}
+
+\end{document}
