@@ -16,7 +16,7 @@ We might like to think that USB has taken away some of the complexity, but that'
 
 Disk I/O, when discussing magnetic hard disks, has a huge impact on system performance that it will receive its own discussion. But first, a little discussion about I/O in general.
 
-We will not be spending any time talking bout the specifics of the hardware (though it might be helpful to review that information on your own). For I/O the key parts are the bus (and a modern PC has several, including the PCIe bus, USB, etc.) and a controller (electronics to operate the hardware port, bus, device...). After that there will be a system or protocol for how the devices will communicate, whether it is polling, interrupts, or DMA (Direct Memory Access) as discussed earlier. With that out of the way, let us examine devices at a higher level.
+We will not be spending any time talking about the specifics of the hardware (though it might be helpful to review that information on your own). For I/O the key parts are the bus (and a modern PC has several, including the PCIe bus, USB, etc.) and a controller (electronics to operate the hardware port, bus, device...). After that there will be a system or protocol for how the devices will communicate, whether it is polling, interrupts, or DMA (Direct Memory Access) as discussed earlier. With that out of the way, let us examine devices at a higher level.
 
 \subsection*{Application I/O Interface}
 
@@ -58,7 +58,7 @@ The block device interface is used for block devices such as hard disk drives. A
 
 We can abstract things a little bit further, from the perspective of the application developer, by having a memory-mapped file. Then, rather than using the block oriented operations directly, the application just writes to and reads from ``memory'' and the OS handles the behind-the-scene coordination to make writes go out to the correct block and read from the correct block.
 
-A character-oriented device is something like the keyboard; the system calls are \texttt{get} and \texttt{put}. Libraries and other structures may exist to work on a whole line at a time (compare to, for example, the Java constructs for reading and writing files: the default streams are one character at a time, but if you want anything other than terrible performance, use a buffered reader which can read a whole line). This is a good match for input devices that produce data in small amounts and ant unpredictable times, and perhaps for printers and sound output which operate naturally on a linear stream of bytes~\cite{osc}.
+A character-oriented device is something like the keyboard; the system calls are \texttt{get} and \texttt{put}. Libraries and other structures may exist to work on a whole line at a time (compare to, for example, the Java constructs for reading and writing files: the default streams are one character at a time, but if you want anything other than terrible performance, use a buffered reader which can read a whole line). This is a good match for input devices that produce data in small amounts and at unpredictable times, and perhaps for printers and sound output which operate naturally on a linear stream of bytes~\cite{osc}.
 
 
 \subsection*{Buffering}

@@ -20,7 +20,7 @@ The diagram below is a quick overview of what hard drives look like internally. 
 	Moving-head disk mechanism~\cite{osc}.
 \end{center}
 
-A read-write head is suspended a very small distance above the surface of each platter and reads or writes data directly beneath it. This is why they are carefully sealed: if a bit of dust lands on the platter, the read-write head can run into it (which is bad). IT gets even worse if a disk head makes contact with the platter: this is called a head crash and it tends to permanently destroy data. The platter surface is divided logically into different circular tracks, which are respectively divided up into sectors (blocks). A set of tracks stacked vertically is called a column. When the disk is in use, a motor spins the platters at high speed and another one manipulates the positions of the arm.
+A read-write head is suspended a very small distance above the surface of each platter and reads or writes data directly beneath it. This is why they are carefully sealed: if a bit of dust lands on the platter, the read-write head can run into it (which is bad). It gets even worse if a disk head makes contact with the platter: this is called a head crash and it tends to permanently destroy data. The platter surface is divided logically into different circular tracks, which are respectively divided up into sectors (blocks). A set of tracks stacked vertically is called a column. When the disk is in use, a motor spins the platters at high speed and another one manipulates the positions of the arm.
 
 The performance of the disk can be broken down into two values. The first is the \textit{transfer rate}; the speed at which data can be moved from the disk to the computer or vice-versa. The other is the \textit{random-access time}; how long it takes to get to a particular piece of data. The random access time itself is broken down into the \textit{seek time}, how long it takes to move the disk arm to the right position, and the \textit{rotational latency}, how long it takes to rotate the platters to the right position. Seek times and rational latencies tend to run in the millisecond range~\cite{osc}.
 
@@ -84,7 +84,7 @@ Using the same example as before, the closest request to the start position of 5
 
 This routine is unfortunately subject to starvation. Suppose the disk head is at position 14. While is is there, a new request at 14 arrives, making the request at 98 wait. If enough low-numbered requests arrive to arrive during execution, a request at a high number may be put off, potentially indefinitely. The more requests occur, the more likely starvation is.
 
-Though the SSTF algorithm is an improvement, it is not optimal. In the example, we would reduce the total amount of movement to 208 cylinders if we did the move from 53 to 37, even though it is not the closes, and then to 14, before moving to 65, 67, 98, 122, 124, and 183~\cite{osc}.
+Though the SSTF algorithm is an improvement, it is not optimal. In the example, we would reduce the total amount of movement to 208 cylinders if we did the move from 53 to 37, even though it is not the closest, and then to 14, before moving to 65, 67, 98, 122, 124, and 183~\cite{osc}.
 
 This algorithm provides for some spatial locality. If there are a number of requests that are located near one another on the disk, the SSTF algorithm takes advantage of this and will carry out all those requests relatively quickly.
 
