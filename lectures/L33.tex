@@ -27,6 +27,45 @@ On at least one disk somewhere in the system, there will need to be some informa
 
 Disks may be split, logically, into several different areas, or \textit{partitions}. Accordingly, there will be a partition table (sometimes called the superblock or master file table) that indicates what part of the disk belongs to which partition. In the Windows world we often see the whole disk is in one logical partition (the C: drive, for example, taking the whole primary disk). In Linux we often see the disk divided up to have partitions for different things: temporary/swap directory, home directories, boot partition, et cetera...
 
+There are several structures that are likely to be in memory for performance reasons~\cite{osc}:
+
+\begin{enumerate}
+	\item \textbf{Mount Table}: Information about each mounted volume (disk/partition).
+	\item \textbf{Cache}: Directory info for recently accessed directories.
+	\item \textbf{Global Open File Table}: Copy of the FCB for each open file.
+	\item \textbf{Process Open File Table}: References to the global open file table, sorted by process.
+	\item \textbf{Buffers}: places where data read from or to be written to disk resides after or before the actual disk operation.
+\end{enumerate}
+
+Creating a new file is the job of the logical file system: allocation of a new FCB (or re-use of an existing free FCB). A typical FCB might look like this:
+
+\begin{center}
+	\includegraphics[width=0.4\textwidth]{images/fcb.png}\\
+	File Control Block (FCB) example~\cite{osc}.
+\end{center}
+
+If a user (application) actually wants to make use of a file, the open system call is needed. Open operates on names, the user comprehensible version. The file system must then check the global open file table to see if the file is already open somewhere in the system. If so, if that file is opened for exclusive access, then the open routine returns with an error. If it is open but for non-exclusive access, then there is no need to search for the file or retrieve it by directory; we just make another reference in the process open file table. If the file is not already open, then it needs to be retrieved; once the file is found, the FCB is copied into the global open file table and the appropriate reference is added to the process table~\cite{osc}.
+
+The process open file table can contain some additional information, like the next section to read or write, the access mode when the file is open, and so on. The open system call returns a pointer to the file table and this is the route through which the application performs all file operations. In UNIX this reference is called a \textit{file descriptor}; in Windows it is called a \textit{file handle}~\cite{osc}.
+
+The opposite operation to opening a file is obviously to close it. When a process closes a file, the entry from the process open file table can be removed. If this is the last reference to the file a process has, then the file can also be removed from the global open file table. Metadata may be updated on close.
+
+The diagram below shows how a file is opened and how a read takes place:
+
+\begin{center}
+	\includegraphics[width=0.75\textwidth]{images/file-system-structures.png}\\
+	File System Structures for (a) file open and (b) file read~\cite{osc}.
+\end{center}
+
+\subsection*{Virtual File System}
+
+\subsection*{Directory Implementation}
+
+\subsection*{Allocation Methods}
+
+
+
+
 \input{bibliography.tex}
 
 \end{document}
