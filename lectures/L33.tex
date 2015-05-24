@@ -59,11 +59,59 @@ The diagram below shows how a file is opened and how a read takes place:
 
 \subsection*{Virtual File System}
 
-\subsection*{Directory Implementation}
+We mentioned earlier that there are a lot of different file systems, like ext3, ZFS, etc. These may co-exist in the same system, though a partition will be formatted in only one of them. From the user's perspective, however, these operate identically. This is because of an additional layer of abstraction, called the virtual file system (VFS). 
 
-\subsection*{Allocation Methods}
+There are two main purposes to the VFS. The first is to separate the file system operations (like reading, writing, opening, and closing files) from the actual implementation; thus operations can be done with whatever file system is actually implemented. The second is that it provides a mechanism for representing a file, uniquely, throughout a network. The file representation structure is called a \textit{vnode}, which is rather like an inode, but inodes are unique only within one file system. The VFS distinguishes between local and remote files~\cite{osc}.
+
+\begin{center}
+	\includegraphics[width=0.5\textwidth]{images/vfs.png}\\
+	Schematic view of the VFS Interface~\cite{osc}.
+\end{center}
+
+The VFS architecture in Linux has four main objects~\cite{osc}:
+\begin{enumerate}
+	\item inode (an individual file)
+	\item file (an open file)
+	\item superblock (the file system)
+	\item dentry (a directory entry)
+\end{enumerate}
+
+For each of those, there are a set of operations defined. In the Linux kernel, these operations are defined in the \texttt{fs.h} headers and may include functions such as:
+
+\begin{verbatim}
+ ssize_t (*read) (struct file *, char __user *, size_t, loff_t *);
+ ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
+ int (*open) (struct inode *, struct file *);
+ int (*flush) (struct file *, fl_owner_t id);
+ int (*release) (struct inode *, struct file *);
+\end{verbatim}
+
+The VFS therefore abstracts away a lot of the details of the underlying file system implementation.
+
+\subsection*{Directory Implementation} 
+
+See the table below for some information about what data may appear in a typical file directory.
+
+\begin{center}
+	\includegraphics[width=0.75\textwidth]{images/directory.png}\\
+	Information elements of a file directory~\cite{osi}.
+\end{center}
 
 
+A directory is, after all, not much beyond a set of files. And yet, there is a choice to be made in implementing them: a linear list versus a hash table. Both concepts should be familiar to you from data structures and algorithms.
+
+The linear list option is certainly the simplest. Creating a new file requires searching the directory to see if there is a matching file name. If not, insert that new entry in the list. Deletion is also simple: search the list for the matching file and remove it; if it is the last reference to that file, we can free up the space. The real disadvantage to linear lists is that searching takes a long time. Searching through a directory can take quite a while, and the problem is compounded if the search is supposed to include the content of the file as well.
+
+Alternatively, we could use a hash table. The hash is computed based on the file name, and of course there will need to be some strategy for dealing with hash collisions. 
+
+
+
+\paragraph{Searching with Spotlight.}
+An example from Mac OS~X: the Spotlight system-wide desktop search. Spotlight was introduced quite some time ago but it was a revelation compared to the previous search options that were slow and did not necessarily include the file content, just the file names. Spotlight runs queries quickly over the metadata of the system. Spotlight examines each file on creation and modification and uses it to update the metadata related to that file. Those items are then added to the Spotlight index which can be queried very rapidly~\cite{spotlight}.
+
+This is a specific case of preparing the data in advance to make searching or exporting operations fast. Another example is in exporting data to Excel. To export this data, there are two possible ways to do it. One is to examine and process the data for the Excel file at the time of the user request. The other is to maintain that data separately, and when the Excel report is asked for, take that data and put it in the Excel file.
+
+Part of the difficulty with maintaining metadata is when to update it. The longer the time between metadata updates, the higher the chance that there will be a user request that gets back out-of-date data. The faster the metadata update, the more time and processing power is spent creating and updating this metadata.
 
 
 \input{bibliography.tex}
