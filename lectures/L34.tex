@@ -72,6 +72,26 @@ With that out of the way, we can finally show a visual representation of an inod
 	The UNIX inode. Triple indirection is left to the reader's imagination~\cite{osc}.
 \end{center}
 
+\subsection*{Other Disk Issues}
+As with memory, the system will keep track of the free space available.
+
+Bit vectors work just the way we would expect: create a structure in memory where a bit represents a block. If it is free, the bit is 1; allocated is 0. So a bit vector looks like \texttt{0100110111011111000000...}. The problem with this strategy is, of course, that the bigger the disk, the more overhead is needed to store this bit vector.
+
+The next rather obvious approach is a linked list: the head points to the first free space block, and we can traverse the list to get to the next free block. See the diagram below:
+
+\begin{center}
+	\includegraphics[width=0.4\textwidth]{images/disk-linked-list.png}\\
+	Linked free-space list on disk~\cite{osc}.
+\end{center}
+
+Grouping makes this slightly more interesting: the first free block will be used to store the addresses of $n$ free blocks, the first $n-1$ of which are actually free. The last block contains a block with another set of $n$ free blocks. So if we need a large number of free blocks, we can find them quickly, instead of walking through the list one block at a time, which takes a lot of disk accesses. Counting is a slight improvement on this where we also store a number $k$ of free contiguous blocks after each address. So, if block 27 is followed by three consecutive free blocks, instead of having 27, 28, 29, 30 as entries, it will show (27, 4). The entries may be stores in a balanced tree for efficient operations~\cite{osc}.
+
+
+The efficient use of a disk depends on the disk-allocation and directory algorithms. UNIX inodes, for example, are preallocated, so even a disk containing no files has some of its space taken up by the inodes. Preallocation of inodes and distribution of them improves the file system performance, because the UNIX allocation and free-space algorithms keep the file data near the inode, where possible, to reduce seek time~\cite{osc}.
+
+\subsection*{Consistency Checking and Journalling}
+
+
 \input{bibliography.tex}
 
 \end{document}
