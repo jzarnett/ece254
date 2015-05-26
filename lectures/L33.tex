@@ -113,6 +113,56 @@ This is a specific case of preparing the data in advance to make searching or ex
 
 Part of the difficulty with maintaining metadata is when to update it. The longer the time between metadata updates, the higher the chance that there will be a user request that gets back out-of-date data. The faster the metadata update, the more time and processing power is spent creating and updating this metadata.
 
+\subsection*{Directory Structures with B-Trees}
+An AVL tree might be good as a way of storing ordered data, but it does not match well with the block system of a hard drive. Instead, we will examine a B-Tree, a variation on a binary search tree. 
+
+Each node should occupy one block, so each node can contain a lot of information. File and directory information is linearly ordered, but a block does not need to be full. If a leaf node gets full, we can split it into two half-full blocks. Keeping the tree balanced means it takes about the same amount of time to find an item wherever it is.
+
+A B-Tree structure, formally, has the following characteristics~\cite{osi}:
+
+\begin{enumerate}
+	\item The tree is made up of nodes (have children) and leaves (have no children).
+	\item Each node contains at least one key identifying a file record, and more than one pointer to child nodes or child leaves.
+	\item Each node has some maximum number of keys.
+	\item The keys in a node are stored in non-decreasing order.
+\end{enumerate}
+
+And a B-tree of degree $d$ has the following properties~\cite{osi}:
+
+\begin{enumerate}
+	\item Every node has at most $2d-1$ keys and $2d$ children ($2d$ pointers).
+	\item Every node other than the root has at least $d-1$ keys and $d$ pointers. Each internal node except the root is at least half full and has at least $d$ children.
+	\item All leaves appear on the same level.
+	\item A non-leaf node with $k$ pointers contains $k-1$ keys.
+\end{enumerate}
+
+To find something in a B-Tree, the general algorithm is fairly simple~\cite{osi}:
+
+\begin{enumerate}
+	\item Start at the root node. 
+	\item If the key is in the current node, it is found, and the algorithm terminates.
+	\item If the key is less than the smallest key in this node, follow the leftmost pointer; go to step 2.
+	\item If the key is greater than the largest key in this node, follow the rightmost pointer; go to step 2.
+	\item If the key is between the values of two adjacent keys, follow the pointer between them; go to step 2.
+\end{enumerate}
+
+
+Insertion into the B-Tree is more complicated, because of the rules that keep the tree balanced~\cite{osi}:
+
+\begin{enumerate}
+	\item Search the tree for the key. If it is not found, then we are at least looking at the block where it would be if it were there.
+	\item If this node has fewer than $2d-1$ keys (that is, it is not full), insert the key into this node in the proper sequence. The algorithm terminates.
+	\item If the node is full, split this node around the median key into two new notes with $d-1$ keys each. Promote the median key to the higher level. If the new node is less than the median key, insert it in the left-hand new node; otherwise into the right.
+	\item The promoted node is inserted into the parent node in order, splitting the parent if the parent is already full.
+	\item If the process of promotion reaches the root node and the root is full, then splitting and promotion occurs and the height of the tree increases by 1.
+\end{enumerate}
+
+Some examples of how the insertion algorithm runs are shown below:
+
+\begin{center}
+	\includegraphics[width=0.9\textwidth]{images/b-tree-insert.png}\\
+	Insertion of nodes 90, 45, and 84 into a B-Tree~\cite{osi}.
+\end{center}
 
 \input{bibliography.tex}
 
