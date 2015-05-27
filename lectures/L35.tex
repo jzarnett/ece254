@@ -17,7 +17,13 @@ At the lowest level, there is the \textit{host}, the underlying hardware system.
 
 This is by no means the same thing as \textit{emulation}. When we have virtualization, for example, both Windows and Linux can be running on the same x86\_64 architecture as guests. In the case of the Android emulator running in an x86\_64 machine, the code of the emulator is running on the x86\_64 environment to simulate an Android hardware device that would have a completely different CPU. Thus, an Android app (which would not otherwise run on an Intel/AMD machine) runs in a simulation of a mobile environment. The emulation operation is incredibly slow, unfortunately, as anyone who has tried to use the Android emulator has found out. Sometimes, however, it does not much matter; if you are trying to play a classic game that ran under MS-DOS, emulating an 486 computer does not take much by way of resources and the modern computer can do so with ease.
 
-Those who run operating systems that are not named ``Microsoft Windows'' are likely to have had the situation where one or more programs that are needed for some purpose (work, school, whatever) function only under Windows. And as the versions of Windows have proliferated and evolved, older programs have sometimes stopped working, necessitating a past version (Windows XP will never, ever die...). There are other motivations like utilization, security, and so on, but let us not belabour the point of motivation.
+Those who run operating systems that are not named ``Microsoft Windows'' are likely to have had the situation where one or more programs that are needed for some purpose (work, school, whatever) function only under Windows. And as the versions of Windows have proliferated and evolved, older programs have sometimes stopped working, necessitating a past version (Windows XP will never, ever die...).
+
+Another neat thing is the ability to suspend (pause) execution of a running virtual machine. This is like pausing a process: the current state is taken and saved, and can be restored at a later time. Also like a process, it can be moved around to another system and resume after that move has taken place, or cloned to get an identical copy somewhere else.
+
+A third reason for virtualization is protection. The guests are isolated from the host and vice versa. If a virus infects one of the guests, the other guests are not affected. And with a virtual machine, it will be that much easier to delete and reinstall the guest or roll it back to an earlier state. This would be exactly the state that we have stored when suspending it... just take periodic copies of it.
+
+Finally, we often see consolidation in data centres: there are many servers running that could be sharing the same physical hardware. Instead of having a lot of lightly used physical systems, convert them to virtual and put them all in the same physical machine. This is often combined with a utility to convert a physical machine to a virtual one; all the system data and configuration and such is copied and turned into a snapshot and this snapshot is then started up inside the virtual machine.
 
 \subsection*{Behind the Scenes}
 
@@ -47,9 +53,12 @@ To get around this problem, we will use a technique called \textit{binary transl
 
 Although we have a performance decrease as a result of having to examine and replace some of the instructions, most instructions can run natively and only a small number of them need to be emulated. The empirical test of ``what is being used in industry'' seems to indicate that the performance of binary translation is adequate, as there is now widespread adoption of virtual machines running on x86 hardware.
 
+Okay, the last paragraph was a little bit misleading, because additional hardware support has come along to make virtualization work a lot better than it would have. Starting in 2005, Intel added virtualization support to x86 processors and AMD added it in 2006. This breaks down the old rules of dual-mode (kernel/user) processors into multi-mode operation. The VMM can enable host mode, define a guest's characteristics, and then switch to guest mode, passing control to the guest. If the gluest tries to access a virtualized resource, the VMM takes over to manage the interaction~\cite{osc}.
+
+
 \subsection*{The Impact}
 
-The one sentence version of what happens when we have virtualization is that things start to get complicated. There are more demands on resources and more difficulties in assigning resources. We will consider the impact on a few different areas, including scheduling, memory management, I/O, and disk~\cite{osc}:
+The short version of what happens under virtualization is: things get complicated. There are more demands on and difficulties in resources. We will consider the impact on scheduling, memory management, I/O, and disk~\cite{osc}.
 
 \subsubsection*{Scheduling}
 
@@ -74,10 +83,32 @@ Virtualization makes the memory problem a lot worse than it otherwise would be. 
 \paragraph{Duplicate Detection.} A third idea is for the VMM to look to see if the same page is loaded more than once. This is obviously more likely if the guests are identical (i.e., the same OS). This will result in significant savings, as the operating system may take up a significant portion of memory on its own. To make the operation efficient, a hash value for memory may be taken; if two hashes match then a byte-by-byte comparison will reveal whether they are actually identical. If so, no need to keep both copies in memory. If there is a modification to a shared page, we need to copy the page before the modification is made.
 
 \subsubsection*{Input/Output}
-Unlike CPUs and RAM, the guest OSes 
+Unlike CPUs and RAM, the guest OSes are likely to tolerate the fact that the I/O devices may change periodically and during operation, such as when a user plugs in a USB key or moves into range of a WiFi network. In fact, we have device drivers as the interface to the OS, regardless of what type of device it is. When running in a virtual machine, a guest may see several virtual devices as if they were real~\cite{osc}.
 
+The VMM can decide how to allocated I/O devices to guests; one way is to just dedicate the I/O device to a guest such as a USB key being allocated to one guest in particular. In other cases, the VMM provides drivers that are just translating commands into the actual device commands. 
 
 \subsubsection*{Disk}
+
+The typical approach is to create a \textit{disk image}, that contains all the contents of the root disk of the guest. This is one big file (though it can be split up into manageable-sized chunks) and as far as the guest is concerned it has the run of that whole disk, totally unaware that the disk is just a file inside another system. This makes it a lot easier to move a virtual machine around from one system to another, if desired.
+
+\subsection*{Live Migration}
+One of the really impressive features of virtualization is the ability to migrate a running system from one physical machine to another. The goal is to copy one system to another in a way that users logged into the guest and programs running on the guest do not notice. If we were moving users to another physical machine, we would have to warn them in advance, close processes, start them up again... Live migration takes the following steps~\cite{osc}:
+
+\begin{enumerate}
+	\item The source VMM connects to the destination VMM.
+	\item The destination VMM creates a configuration for a new guest: new VCPU, new nested page table, state, etc.
+	\item The source sends all read-only memory pages to the destination.
+	\item The source sends all read-write pages (marking them as clean).
+	\item Any pages that were modified during the previous step (if any) are sent and marked as clean. 
+	\item If there were sufficiently few pages that were dirty in the previous two steps, the source freezes the guest, sends the final state (including VCPU data) and any final dirty pages.
+	\item The destination acknowledges receipt and begins execution of the guest.
+	\item The source terminates the guest (how rude!).
+\end{enumerate}
+
+\begin{center}
+	\includegraphics[width=0.5\textwidth]{images/live-migration.png}\\
+	Live migration of a guest from the source to destination (target)~\cite{osc}.
+\end{center}
 
 \input{bibliography.tex}
 
