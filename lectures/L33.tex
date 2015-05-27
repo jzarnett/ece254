@@ -15,9 +15,9 @@ Let us take a look at the layers of the file system's design, from~\cite{osc}. A
 
 \paragraph{Basic File System.} Despite the awful name, this is the level at which we start to deal with physical blocks on the disk. A physical block is identified by its numerical physical address: drive 0, cylinder 12, track 7, sector 1. This layer is also responsible for buffers and caches that are used to hold various commonly-accessed regions (e.g., the temporary directory). Yes, caching and buffers can appear in the hard disk as well, with performance improvements traded off against the risk of data loss if power is suddenly cut.
 
-\paragraph{File Organization Module.} This module is aware of files and their logical and physical blocks. This translates a logical block address to a physical block address, keeps track of free space (unallocated blocks).
+\paragraph{File Organization Module.} This module is aware of files and their logical and physical blocks. This translates a logical block address to a physical block address and keeps track of free space (unallocated blocks).
 
-\paragraph{The Logical File System.} This last level is for managing metadata: file system structure, directory structure, and maintaining the file structure. File data is maintained in a \textit{file control block} (FCB). The UNIX term for this is \textit{inode} and it is the place where file info is stores: ownership, permissions, locations of the file contents.
+\paragraph{The Logical File System.} This last level is for managing metadata: file system structure, directory structure, and maintaining the file structure. File data is maintained in a \textit{file control block} (FCB). The UNIX term for this is \textit{inode} and it is the place where file info is stored: ownership, permissions, locations of the file contents.
 
 \subsection*{Disk Organization}
 
@@ -111,7 +111,7 @@ An example from Mac OS~X: the Spotlight system-wide desktop search. Spotlight wa
 
 This is a specific case of preparing the data in advance to make searching or exporting operations fast. Another example is in exporting data to Excel. To export this data, there are two possible ways to do it. One is to examine and process the data for the Excel file at the time of the user request. The other is to maintain that data separately, and when the Excel report is asked for, take that data and put it in the Excel file.
 
-Part of the difficulty with maintaining metadata is when to update it. The longer the time between metadata updates, the higher the chance that there will be a user request that gets back out-of-date data. The faster the metadata update, the more time and processing power is spent creating and updating this metadata.
+Part of the difficulty with maintaining metadata is when to update it. The longer the time between metadata updates, the higher the chance that there will be a user request that gets back out-of-date data. The faster the metadata updates, the more time and processing power is spent creating and updating this metadata.
 
 \subsection*{Directory Structures with B-Trees}
 An AVL tree might be good as a way of storing ordered data, but it does not match well with the block system of a hard drive. Instead, we will examine a B-Tree, a variation on a binary search tree. 
@@ -152,7 +152,7 @@ Insertion into the B-Tree is more complicated, because of the rules that keep th
 \begin{enumerate}
 	\item Search the tree for the key. If it is not found, then we are at least looking at the block where it would be if it were there.
 	\item If this node has fewer than $2d-1$ keys (that is, it is not full), insert the key into this node in the proper sequence. The algorithm terminates.
-	\item If the node is full, split this node around the median key into two new notes with $d-1$ keys each. Promote the median key to the higher level. If the new node is less than the median key, insert it in the left-hand new node; otherwise into the right.
+	\item If the node is full, split this node around the median key into two new nodes with $d-1$ keys each. Promote the median key to the higher level. If the new node is less than the median key, insert it in the left-hand new node; otherwise into the right.
 	\item The promoted node is inserted into the parent node in order, splitting the parent if the parent is already full.
 	\item If the process of promotion reaches the root node and the root is full, then splitting and promotion occurs and the height of the tree increases by 1.
 \end{enumerate}
