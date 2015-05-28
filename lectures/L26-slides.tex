@@ -1,0 +1,501 @@
+\input{configuration}
+
+\title{Lecture 26 --- Scheduling Algorithms}
+
+\author{Jeff Zarnett \\ \small \texttt{jzarnett@uwaterloo.ca}}
+\institute{Department of Electrical and Computer Engineering \\
+  University of Waterloo}
+\date{\today}
+
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+
+ \end{frame}
+
+
+
+\begin{frame}
+\frametitle{Scheduling Algorithms}
+
+Earlier we saw one example of a simple scheduling algorithm. 
+
+Always choose the highest priority (non-blocked) task, and execute it. 
+
+There are many other choices we could make:
+\begin{enumerate}
+	\item Highest Priority, Period
+	\item First-Come, First-Served
+	\item Round Robin
+	\item Shortest Process Next
+	\item Shortest Job First
+	\item Smallest Remaining Time
+	\item Highest Response Ratio Next
+	\item Multilevel Queue (Feedback)
+	\item Guaranteed Scheduling
+	\item Lottery
+\end{enumerate}
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Scheduling Criteria}
+
+The OS may maintain data about each process to be used in making decisions about scheduling:
+
+\begin{enumerate}
+	\item The time spent waiting to run.
+	\item The time spent executing.
+	\item The total time of execution.
+\end{enumerate}
+
+The first two can be measured; the second must be estimated or supplied.
+
+Desktop OSes do not ask users for estimates, but supercomputers might.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Highest Priority, Period}
+
+Implementing this is not difficult; priority queues (one for each priority level).
+
+If a task is not blocked, put it in its appropriate priority queue. 
+ 
+If the process's priority is changed, move it to its new home. 
+
+We might have a priority heap, or just one big linked list or array that we keep sorted by priority.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Highest Priority, Period}
+
+The flaw in this has already been identified: it is vulnerable to starvation. 
+
+A process of relatively low priority may never get the chance to run, because there is always something better to do right now. 
+
+Software projects may have bug reports open for years on end because they are never important enough to be addressed.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Highest Priority, Period}
+
+In some systems this is a desirable property. 
+
+It does not fulfill all short term scheduling criteria (response time, fairness). 
+
+It may be suitable for life-and-safety-critical systems.
+
+Example: control a robot arm, to prevent a situation where the robot arm goes through the wall and the building falls down and you're dead.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{First-Come, First-Served}
+
+This is an obvious algorithm that is simple to implement. 
+
+Whichever process requests the CPU first gets the CPU first. 
+
+Just imagine a queue of processes in which all processes are equal. 
+
+A process enters the queue at the back and whichever process is at the front will be dequeued and get to run.  
+
+If the current process finishes or is blocked for some reason, the next ready process is selected. 
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{First-Come, First-Served}
+
+This is actually a simplification of the highest priority, period scheme.
+
+It ignores priority altogether. 
+
+All processes get a chance to run eventually; low priority processes don't starve.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{FCFS: Wait Times}
+
+FCFS can result in some undesirable outcomes. 
+
+The average waiting time for processes might vary wildly. 
+
+Consider if we have three processes, $P_{1}$, $P_{2}$, and $P_{3}$. 
+
+$P_{1}$ needs 24 units of CPU time; $P_{2}$ and $P_{3}$ require 3 units each.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{FCFS: Wait Times}
+
+\begin{center}
+	\includegraphics[width=0.9\textwidth]{images/fcfs-1.png}
+\end{center}
+
+Total time: 30 units. Average completion time: 27 units.
+\begin{center}
+	\includegraphics[width=0.9\textwidth]{images/fcfs-2.png}
+\end{center}
+
+Total time: 30 units. Average completion time: 13 units.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{FCFS: Favouritism}
+
+FCFS also tends to favour CPU-Bound processes. 
+
+When a CPU-Bound process is running, the I/O bound processes must wait in the queue like everybody else. 
+
+This might lead to inefficient use of the resources; disk is slow so we would like to keep it busy at all times. 
+
+With FCFS, however, the I/O devices are likely to suffer idle periods.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{FCFS: Preemption}
+
+The FCFS algorithm as it is generally described, is non-preemptive.
+
+A process that gets selected from the front of the queue runs until there is a reason to make the swap. 
+
+So in theory, one process could monopolize the CPU (remember that some people are jerks). 
+
+If we modify FCFS with periodic preemption, then we get Round Robin.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Round Robin}
+
+The idea of time slicing has already been introduced. 
+
+Every $t$ units of time, a timer generates an interrupt that is the prompt to run the short-term scheduler. 
+
+Time slicing itself can be combined with many of the strategies for choosing the next process, but when it is combined with FCFS we get Round Robin. 
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{How Big of a Slice?}
+
+The principal issue is: how big should $t$ be? 
+
+If $t$ is too long, then processes may seem to be unresponsive while some other process has the CPU. 
+
+Short processes may have to wait quite a while for their turn.
+
+If $t$ is too short, the system spends a lot of time handling the clock interrupt and running the scheduling algorithm.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{How Big of a Slice?}
+
+We could decide about the size of $t$ based on the patterns of the system. 
+
+Suppose typical process tends to run for $r$ units of time before getting blocked.
+
+It would be logical to choose $t$ such that it is slightly larger than $r$. 
+
+\end{frame}
+
+\begin{frame}
+\frametitle{How Big of a Slice?}
+
+If $t$ is smaller than $r$, processes will frequently be interrupted by the time slice. 
+
+Processes that are going to use a lot of CPU will be split up over multiple time slices anyways, but it's frustrating if the process would take 1.1 time slices. 
+
+If $t$ is larger than $r$, many processes will not run up against that time slice limit.
+
+They will hopefully accomplish a useful chunk of work before getting blocked for I/O or some other reason. 
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Round Robin}
+
+Round Robin tends to favour CPU-Bound processes. 
+
+An I/O-Bound process spends a lot less time using the CPU. 
+
+It runs for a short time, gets blocked on I/O, then when the I/O is finished, it goes back in the ready queue. 
+
+So CPU-Bound processes are getting more of the CPU time.
+
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Virtual Round Robin}
+
+Round Robin can be improved to Virtual Round Robin to address this. 
+
+It works like Round Robin, but a process that gets unblocked after I/O gets higher priority.
+
+Instead of just rejoining the general queue, there is an auxiliary queue for processes that were previously blocked on I/O.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Virtual Round Robin}
+
+When the scheduler is choosing a process to run, it takes them from the auxiliary queue if possible. 
+
+If a process simply ran up against the time limit, it goes into the regular ready queue instead. 
+
+If dispatched from the auxiliary queue, it runs for up to the as-yet-unused fraction of a slice.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Virtual Round Robin}
+
+\begin{center}
+	\includegraphics[width=0.65\textwidth]{images/virtual-round-robin.png}.
+\end{center}
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Shortest Process Next}
+
+If some information is available about the total length of execution then we may wish to give priority to short processes. 
+
+
+Average time to completion of a task was a lot lower when the shorter processes of $P_{2}$ and $P_{3}$ ran before $P_{1}$. 
+
+This means we will get faster turnaround times and better responsiveness, but longer processes may be waiting an unpredictable amount of time.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Shortest Process Next}
+
+This is the sort of thing that used to happen in batch job processing on mainframes. 
+
+The programmer was asked to give an estimate of the amount of time the program (e.g., compile) would run. 
+
+If the programmer's estimate was too low, the program execution would be terminated early. 
+
+If the programmer's estimate was too high, the job may never be scheduled to run, or at least, have to wait a very long time. 
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Shortest Process Next}
+
+
+This might work, but you have noticed that the OS does not ask you, when you start a text editor, roughly how long you expect to be. 
+
+Your boss on co-op may not be so accommodating. 
+
+This is also a global assessment: how long the whole process takes. 
+
+It might be better to worry about the length of CPU bursts and make decisions somewhat more locally...
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Shortest Job First}
+
+This strategy, unfortunately, is not given quite the right name, but it's the common name for the scheme. 
+
+We should call it ``shortest next CPU burst''.
+
+Then again, the other sciences are not so good at naming things either... the Red Panda is not a Panda at all.
+
+Choose the process that is likely to have the smallest CPU burst. 
+
+If two are the same, then FCFS can break the tie (or just choose randomly). 
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Smallest CPU Burst}
+
+ 
+
+Imagine $P_{1}$ through $P_{4}$, whose predicted burst times are 6, 8, 7, and 3 respectively. 
+
+We should schedule then such that the order would be $P_{4}, P_{1}, P_{3}, P_{2}$.
+
+\begin{center}
+\includegraphics[width=0.7\textwidth]{images/sjf.png}
+\end{center}
+
+The average waiting time is $(3 + 16 + 9 + 0) / 4$ = 7 units of time. 
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Smallest CPU Burst}
+
+This is significantly better than the FCFS scheduling. 
+
+The algorithm is provably optimal in giving the minimum average waiting time for processes. 
+
+Moving a short process up means it finishes faster, and that decreases its waiting time, while moving longer processes back increases their waiting time. 
+
+Overall, this scheme is a net positive; the decreases outweigh the increases.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Smallest CPU Burst}
+
+The problem is predicting the CPU burst times. 
+
+The best thing we may be able to do is gather information about the past and use that to guess about the future. 
+
+\begin{center}
+$S_{n+1} = \frac{1}{n}\displaystyle\sum_{i=1}^{n}T_{i}$
+\end{center}
+
+where:\\
+\quad $T_{i}$ is the burst time for the $i$th instance of this process;\\
+\quad $S_{i}$ is the predicted value for the $i$th instance; \\
+\quad and $S_{1}$ is a guess at the first value.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Estimating CPU Burst}
+
+Instead of a sum each time, modify the equation to just update the value:
+
+\begin{center}
+$S_{n+1} = \frac{1}{n}T_{n} + \frac{n - 1}{n} S_{n}$
+\end{center}
+
+This routine gives each term in the summation equal weight of $\frac{1}{n}$. 
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Estimating CPU Burst}
+
+Give greater weight to the more recent values: exponential averaging. 
+
+Define a weighting factor $\alpha$, somewhere between 0 and 1, that determines how much weight the observations are given:
+
+\begin{center}
+$S_{n+1} = \alpha T_{n} + (1 - \alpha) S_{n}$
+\end{center}
+
+The larger the value of $\alpha$, the more the recent observations matter.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Exponential Averaging}
+
+\begin{center}
+	\includegraphics[width=0.5\textwidth]{images/exponential-averaging.png}
+\end{center}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Choosing a Starting Value}
+
+
+We might give an estimate of $S_{1} = 0$ to start with, which gives new processes priority and a chance to get started. 
+
+After they have started and run a bit, we will have some data. 
+
+But first we have to give them a chance.
+
+There is still a chance that longer processes will starve. 
+
+If there is a constant stream of shorter processes, they will continue to get scheduled ahead of a long one...
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Predictions and CPU Burst}
+
+\begin{center}
+\includegraphics[width=\textwidth]{images/sjf-2.png}
+\end{center}
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Shortest Remaining Time}
+
+Shortest remaining time is a modification of the preceding strategy, which allows for some additional preemption. 
+
+When a new process is scheduled or an old one becomes unblocked, the scheduler will run.
+
+It evaluates if the candidate has a shorter predicted running time than the currently-executing process. 
+
+If so, then the candidate will displace the currently-executing one and start running right away.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Shortest Remaining Time}
+
+As with Shortest Job First, there is a chance that long processes will starve because of a steady stream of shorter processes. 
+
+If we choose $S_{1}$ to be zero for new processes, it means they will always preempt the running process. 
+
+This may or may not be desirable.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Shortest Remaining Time Slicing}
+
+One advantage: we no longer need to have time slicing. 
+
+Instead of interrupting the running process every $t$ units of time, the other interrupts will be the prompts to run the scheduler. 
+
+Thus, the system does not spend any time handling the clock interrupts, which will be a performance increase. 
+
+Handling the clock interrupt is not expensive, but even an inexpensive operation, done a million times, will eventually add up...
+
+
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Batch and Interactive}
+
+So far the scheduling routines we have looked at are more suitable to batch processing systems than to interactive desktop systems. 
+
+The remaining scheduling algorithms in the list will look a lot more like what we expect to see on our laptops and phones...
+
+
+\end{frame}
+
+\end{document}
+

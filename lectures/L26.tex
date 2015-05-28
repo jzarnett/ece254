@@ -62,7 +62,7 @@ FCFS as a scheduling algorithm also tends to favour CPU-Bound processes rather t
 The FCFS algorithm as it is generally described, is non-preemptive; a process that gets selected from the front of the queue runs until there is a reason to make the swap. So in theory, one process could monopolize the CPU (remember that some people are jerks). If we modify FCFS with periodic preemption, then we get a new system, Round Robin.
 
 \subsection*{Round Robin}
-The idea of time slicing has already been introduced: every $t$ units of time, a timer generates an interrupt that is the prompt to run the short-term scheduler. Time slicing itself can be combined with many of the strategies for choosing the next process, but when it is combined with FCFC we get Round Robin. 
+The idea of time slicing has already been introduced: every $t$ units of time, a timer generates an interrupt that is the prompt to run the short-term scheduler. Time slicing itself can be combined with many of the strategies for choosing the next process, but when it is combined with FCFS we get Round Robin. 
 
 The principal issue is: how big should $t$ be? If $t$ is too long, then processes may seem to be unresponsive while some other process has the CPU, or short processes may have to wait quite a while for their turn. If $t$ is too short, the system spends a lot of time handling the clock interrupt and running the scheduling algorithm and not a lot of time actually executing the processes~\cite{osi}.
 
