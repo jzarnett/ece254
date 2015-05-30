@@ -52,7 +52,7 @@ The OS may maintain data about each process to be used in making decisions about
 	\item The total time of execution.
 \end{enumerate}
 
-The first two can be measured; the second must be estimated or supplied.
+The first two can be measured; the third must be estimated or supplied.
 
 Desktop OSes do not ask users for estimates, but supercomputers might.
 
@@ -210,7 +210,7 @@ If $t$ is too short, the system spends a lot of time handling the clock interrup
 
 We could decide about the size of $t$ based on the patterns of the system. 
 
-Suppose typical process tends to run for $r$ units of time before getting blocked.
+Suppose a typical process tends to run for $r$ units of time before getting blocked.
 
 It would be logical to choose $t$ such that it is slightly larger than $r$. 
 
