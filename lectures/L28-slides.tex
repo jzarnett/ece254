@@ -118,7 +118,7 @@ Linux, for example, has both soft and hard affinity
 
 For the most part any memory read takes as much time as any other. 
 
-If we have one bus connecting the CPU to all of main memory, that is a safe assumption.
+One bus connecting the CPU to all of main memory? That is a safe assumption.
 
   If the CPU can access some parts of memory faster than others, the system has \alert{non-uniform memory access} (NUMA).
 
@@ -280,64 +280,258 @@ Coarse-grained multithreading: flushing the instruction pipeline.
 
 That is expensive. 
 
-Fine-grained multithreading: alternation between two threads that are in the pipeline. 
+Fine-grained multithreading: alternation between 2 threads in the pipeline. 
 
 The cost of switching between these two threads is small.
 
 \end{frame}
 
 \begin{frame}
-\frametitle{}
+\frametitle{Two Levels of Scheduling}
+
+So now we have two different levels of scheduling.
+
+1. Assigning a process or thread to a processor (job of the operating system)
+
+2. When to swap between the two threads in the core (job of the hardware). 
 
 \end{frame}
 
 \begin{frame}
-\frametitle{}
+\frametitle{Real-Time Scheduling}
+
+Real-Time scheduling is just scheduling for real-time systems.
+
+But what is a real-time system?
+
+Supposed to respond to events within some real (wall-clock) time. 
+
+There are deadlines, and there are consequences for missing deadlines. 
+
+Fast is not as important as predictable.
 
 \end{frame}
 
 \begin{frame}
-\frametitle{}
+\frametitle{Hard and Soft Real-Time}
+
+\alert{Hard real-time}: it has a deadline that must be met to prevent an error, prevent some damage to the system, or for the answer to make sense. 
+
+If a task is attempting to calculate the position of an incoming missile, a late answer is no good. 
+
+A \alert{soft real-time} task has a deadline that is not, strictly speaking, mandatory; missing the deadline degrades the quality of the response, but it is not useless.
+
 
 \end{frame}
 
 \begin{frame}
-\frametitle{}
+\frametitle{Hard Real-Time Failure}
+
+If a task is hard real-time, there are two scenarios in which it might not complete before its deadline. 
+
+The first is that it is scheduled too late; like an assignment that will take two hours to complete being started one hour before the deadline. 
+
+If that is the case, the system will likely reject the request to start the task, or perhaps never schedule the task to run at all. 
+
+Why waste computation time on a task that will not finish in time? 
 
 \end{frame}
 
 \begin{frame}
-\frametitle{}
+\frametitle{Hard Real-Time Failure}
+
+The second scenario is that at the time of starting, completion was possible. 
+
+For whatever reason (e.g., other tasks with higher priority have occurred) it is no longer possible to meet the deadline. 
+
+In that case, execution of the task may be terminated partway through so that no additional effort is wasted on a task that cannot be completed.
+
 
 \end{frame}
 
 \begin{frame}
-\frametitle{}
+\frametitle{Desktop OSes and Real-Time}
+
+Most of the operating systems you are familiar with (standard Desktop/Server Linux, Mac OS, Windows) are not very suitable to real time systems. 
+
+They make few guarantees, if any, about service. 
+
+When there are consequences for missing deadlines, this kind of thing matters. 
+
+Remember Java's ``stop the world'' garbage collector scenario.
 
 \end{frame}
 
 \begin{frame}
-\frametitle{}
+\frametitle{Timeline Scheduling}
+
+If a process/task recurs at regular intervals, it is \alert{periodic}.
+
+Periodic tasks are very common: check a sensor, decode and display a frame of video to a screen, keep the wifi connection alive, etc.
 
 \end{frame}
 
 \begin{frame}
-\frametitle{}
+\frametitle{Periodic Task}
+
+Consider a periodic task to have two attributes: 
+
+1. $\tau_{k}$, the period (how often the task takes); and 
+
+2. $c_{k}$, the computation time (how long, in the worst case, the task might run).
 
 \end{frame}
 
 \begin{frame}
-\frametitle{}
+\frametitle{Pessimism}
+
+In real-time systems we are usually pessimists and care almost exclusively about the worst case scenario. 
+
+We can calculate the processor utilization of period tasks according to the following formula, to get the long-term average of processor utilization $U$:
+
+\begin{center}
+$U = \sum\limits_{k=1}^n\dfrac{c_{k}}{\tau_{k}}$
+\end{center}
+
+If $U > 1$, it means the system is overloaded. 
 
 \end{frame}
 
 \begin{frame}
-\frametitle{}
+\frametitle{Overload}
+If overloaded: there are too many period tasks and we cannot guarantee that the system can execute all tasks and meet the deadlines. 
+
+Otherwise, we will be able to devise a schedule that makes it all work.
 
 \end{frame}
 
 \begin{frame}
-\frametitle{}
+\frametitle{Periodic Tasks}
+
+If the only tasks in the system are periodic ones, create a fixed schedule. 
+
+This is what the university administrators do when they create the schedule of classes for a given term.
+
+ Every Monday, for example, from 13:30-14:50, course ECE~254 (a ``process'', if you will) takes place in classroom EIT~1015 (a resource). 
+ 
+If there are more requests for room reservations than rooms and time slots available, it means some requests cannot be accommodated.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Living in a Periodic World}
+
+A world in which all the tasks are periodic and behave nicely is, well, a very orderly world (and that has its appeal). 
+
+Unfortunately, the real world is not so accommodating most of the time. 
+
+So we will need to deal with tasks that are not periodic, which we can categorize as \alert{aperiodic} or \alert{sporadic}.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Aperiodic Tasks}
+
+Aperiodic tasks are ones that respond to events that occur irregularly. 
+
+There is no minimum time interval between two events.
+
+Therefore it would be very difficult to make a guarantee that we will finish them before the next one occurs, so they are rarely hard real-time (hard deadlines). 
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Aperiodic Tasks}
+
+Tasks like this should be scheduled in such a way that that they do not prevent another task with a hard deadline from missing its deadline. 
+
+As an example, if we expect an average arrival rate of 3 requests per second, there is still a 1.2\% chance that eight or more requests appear within 1~second. 
+
+If so, there is not much we can do to accommodate them all (most likely).
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Sporadic Tasks}
+
+Sporadic tasks are aperiodic, but they require meeting deadlines. 
+
+To make such a promise we need a guarantee that there is a minimum time $\tau_{k}$ between occurrences of the event. 
+
+Sporadic tasks can overload the system if there are too many of them, and if that is the case, we must make decisions. 
+
+If we know a task will not make its deadline, we will likely not even bother to schedule it (why waste the time on a task where the answer will be irrelevant?)
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Aperiodic, Sporadic, and Timeline}
+
+So, these aperiodic and sporadic tasks really mess with timeline scheduling. 
+
+This unpredictability makes it hard to create a simple timetable and follow it.
+
+If we have pre-emptive scheduling, then we can examine 2 optimal alternatives. 
+
+They are called optimal because they will ensure a schedule where all tasks meet their deadlines, not because they are the ideal algorithms.
+
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Earliest Deadline First}
+
+The earliest deadline first algorithm is, presumably, very familiar to students. 
+
+Assignment due today, an assignment due next Tuesday, and an exam next month, then you may choose to schedule these things by their deadlines. 
+
+Do the assignment due today first. 
+
+After completing an assignment, decide what to do next (probably the new assignment, but perhaps a new task has arrived in the meantime?) and start.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Earliest Deadline First}
+
+The principle is the same for the computer. 
+
+Choose the task with the soonest deadline; if there is a tie, then random selection between the two will be sufficient (or other criteria may be used). 
+
+If there exists some way to schedule all the tasks such that all deadlines are met, this algorithm will find it. 
+
+If a task is executing and another task arrives with a sooner deadline, the currently executing task should be suspended and the new task scheduled. 
+
+This may mean a periodic task being preempted by an aperiodic/sporadic task.
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Least Slack First}
+
+A similar algorithm to earliest deadline first, is least slack first.
+
+\alert{Slack}: how long a task can wait before it must be scheduled to meet a deadline.
+
+If a task will take 10~ms to execute and its deadline is 50~ms away, then there are (50 - 10) = 40~ms of slack time remaining.
+
+Start the task before 40~ms are expired if we want to be sure that it will finish. 
+
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Least Slack First}
+This does not mean, however, that we necessarily want to wait 40~ms before starting the task (even though many students tend to operate on this basis). 
+
+All things being equal, we prefer tasks to start and finish as soon as possible. 
+
+It does, however, give us an indication of what tasks are in most danger of missing their deadlines and should therefore have priority.
 
 \end{frame}
 
