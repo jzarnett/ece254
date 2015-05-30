@@ -321,7 +321,7 @@ The highest priority queue is chosen; if there are multiple tasks in that queue,
 
 This continues until the active queue structure is empty. 
 
-When that happens, the active and expired queues change places, and execution (scheduling) continues
+When that happens, the active and expired queues change places, and execution (scheduling) continues.
 
 
 \end{frame}
@@ -390,7 +390,7 @@ This is an interval of time in which all ready tasks should get to run at least 
 
 The CPU time is then doled out based on the targeted latency. 
 
-There are usually default and minimum values, but targeted latency can increase if there is a big increase in the number of tasks to be executed
+There are usually default and minimum values, but targeted latency can increase if there is a big increase in the number of tasks to be executed.
 
 \end{frame}
 
@@ -415,7 +415,7 @@ For tasks at a normal priority (nice value of zero), the virtual run time equals
 
 If the physical run time is, say, 50~ms, a process with a nice value of 0 will have a virtual runtime of 50. 
 
-If the process has a positive nice value, the virtual runtime will be larger than 50; if a negative nice value, the virtual runtime will be less than 50
+If the process has a positive nice value, the virtual runtime will be larger than 50; if a negative nice value, the virtual runtime will be less than 50.
 
 \end{frame}
 
@@ -505,7 +505,7 @@ A process is usually in the Normal class.
 
 If a process reaches the end of a time slice, the thread is interrupted.
 
-Unless it is in the real-time category, its priority will be lowered, to a minimum of a of the base priority of each class. 
+Unless it is in the real-time category, its priority will be lowered, to a minimum of the base priority of each class. 
 
 When a process that was blocked on something (e.g., a wait or I/O), its priority is temporarily boosted (unless it is real-time, in which case it cannot be boosted). 
 
