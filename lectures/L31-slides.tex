@@ -167,7 +167,7 @@ To read the first track, it will take 16~ms: 4~ms to seek, 4~ms rotational delay
 
 Because the data is sequential, no additional seek time is necessary, so we just keep reading subsequent sectors which means only the rotational delay. 
 
-Each additional track rakes 12~ms (4~ms rotational delay + 8~ms to read it). Thus the total time is $16 + (4 \times 12)$ = 64~ms.
+Each additional track takes 12~ms (4~ms rotational delay + 8~ms to read it). Thus the total time is $16 + (4 \times 12)$ = 64~ms.
 
 \end{frame}
 
@@ -430,18 +430,6 @@ Loading a page into main memory might need to take priority over an application 
 Higher priority processes, especially in real-time systems, should not be waiting (for too long at least) for lower priority processes' disk writes. 
 
 So, under some circumstances, the operating system needs to manage the reads and writes and not just leave it up to the disk controller.
-
-\end{frame}
-
-\begin{frame}
-\frametitle{}
-
-
-\end{frame}
-
-\begin{frame}
-\frametitle{}
-
 
 \end{frame}
 
