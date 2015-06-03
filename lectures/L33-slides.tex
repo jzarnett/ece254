@@ -274,14 +274,15 @@ The VFS architecture in Linux has four main objects:
 For each of those, there are a set of operations defined. 
 
 On a file, for example:
-
+{\scriptsize
 \begin{verbatim}
  ssize_t (*read) (struct file *, char __user *, size_t, loff_t *);
- ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *); %this line is too long
+ ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *); 
  int (*open) (struct inode *, struct file *);
  int (*flush) (struct file *, fl_owner_t id);
  int (*release) (struct inode *, struct file *);
 \end{verbatim}
+}
 
 \end{frame}
 
