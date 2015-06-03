@@ -92,7 +92,7 @@ A directory is really just a symbol table that translates file names (user-reada
 	\item \textbf{Navigate the File System}. It should be possible to open subdirectories, go to parent directories, and so on.
 \end{enumerate}
 
-There are some simple file systems where there are no such things as subdirectories, but they don't really require any examination. Textbooks may also bring up a structure where each user has his or her own directory but cannot have subdirectories either. Also rather uninteresting. The kind of directory we are most familiar with is tree-structured: there it a root directory, and every file in the system has a unique name when the name and path to it (from the root) are combined.
+There are some simple file systems where there are no such things as subdirectories, but they don't really require any examination. Textbooks may also bring up a structure where each user has his or her own directory but cannot have subdirectories either. Also rather uninteresting. The kind of directory we are most familiar with is tree-structured: there is a root directory, and every file in the system has a unique name when the name and path to it (from the root) are combined.
 
 In UNIX the root directory is just called \texttt{/} (forward slash) and from there we can navigate to any file. If we would like to run the \texttt{ls} command, we will find it in the \texttt{bin} directory as \texttt{/bin/ls}. This is an example of an absolute path. Most of the time we do not have to use the absolute path (the full file name); a relative path (the path from the current directory) will suffice. As an example, if you want to compile something with a command like \texttt{gcc code/example.c}, the file \texttt{example.c} is in a subdirectory of the current directory called \texttt{code} and the system will work out that we need to start from the current directory (e.g., \texttt{/home/jz/ece254/}) and prepend that to the given file name, to produce the absolute path of \texttt{/home/jz/ece254/code/example.c}.
 
@@ -147,7 +147,7 @@ A simple way to represent an access control list is a set of tuples listing the 
 	(bob, execute)
 \end{verbatim}
 
-Access Control Lists have a complexity that the UNIX file permissions do not: the idea of inheritance. We'll examine, briefly, inheritance in NTFS. Inheritance is supposed to be a convenience feature, but it can often be a cause of problems. If there is a directory with ACLs established and object inheritance is enabled, then any new file crated in this directory will receive the same ACL of the directory. The danger is that any existing file moved into the directory will retain its original ACL. If it is supposed to get the ACL of the directory, it needs to be explicitly set~\cite{ntfsacl}.
+Access Control Lists have a complexity that the UNIX file permissions do not: the idea of inheritance. We'll examine, briefly, inheritance in NTFS. Inheritance is supposed to be a convenience feature, but it can often be a cause of problems. If there is a directory with ACLs established and object inheritance is enabled, then any new file created in this directory will receive the same ACL of the directory. The danger is that any existing file moved into the directory will retain its original ACL. If it is supposed to get the ACL of the directory, it needs to be explicitly set~\cite{ntfsacl}.
 
 \input{bibliography.tex}
 
