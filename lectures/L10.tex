@@ -100,10 +100,10 @@ In your earlier examination of sorting, you may have learned that for a small ar
 void insertion_sort( double *array, size_t a, size_t b ) {
   size_t j, k;
   double tmp;
-  for ( int k = a + 1; k < b; ++k ) { 
+  for (k = a + 1; k < b; ++k ) { 
     tmp = array[k];
     
-    for ( int j = k; j > a; --j ) {
+    for (j = k; j > a; --j ) {
       if ( array[j - 1] > tmp ) {
         array[j] = array[j - 1];
       } else {
