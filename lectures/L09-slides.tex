@@ -253,7 +253,7 @@ int sum; /* this data is shared by the thread(s) */
 void *runner(void *param); /* threads call this function */
 int main(int argc, char *argv[]) {
 
-  pthread_t ti; /* the thread identifier */
+  pthread_t tid; /* the thread identifier */
   pthread_attr_t attr; /* set of thread attributes */
 
   if (argc != 2) {
