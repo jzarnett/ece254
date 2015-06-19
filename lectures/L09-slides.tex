@@ -277,7 +277,7 @@ int main(int argc, char *argv[]) {
   /* get the default attributes */
   pthread_attr_init(&attr);
   /* create the thread */
-  pthread_create(&tid, &attr, runner, argv[1]); /* wait */
+  pthread_create(&ti, &attr, runner, argv[1]); /* wait */
   pthread_join(tid, NULL); 
   printf("sum = %d\n", sum);
 }
