@@ -455,10 +455,10 @@ Use \texttt{fork} to spawn a new child process and then setting up a communicati
 
 \begin{verbatim}
 
- char write msg[BUFFER SIZE] = "Greetings"; 
-  char read msg[BUFFER SIZE];
+  char_write msg[BUFFER_SIZE] = "Greetings"; 
+  char_read msg[BUFFER_SIZE];
   int fd[2];
-  pid t pid;
+  pid_t pid;
 
   if (pipe(fd) == -1) {
     fprintf(stderr,"Pipe failed");
@@ -497,13 +497,13 @@ Use \texttt{fork} to spawn a new child process and then setting up a communicati
 
  if (pid > 0) { /* parent process */
     /* close the unused end of the pipe */ 
-    close(fd[READ END]);
+    close(fd[READ_END]);
     
     /* write to the pipe */
-    write(fd[WRITE END], write msg, strlen(write msg)+1);
+    write(fd[WRITE_END], write_msg, strlen(write_msg)+1);
     
     /* close the write end of the pipe */
-    close(fd[WRITE END]);
+    close(fd[WRITE_END]);
     
   } 
 
@@ -520,13 +520,13 @@ Use \texttt{fork} to spawn a new child process and then setting up a communicati
 
   else { /* child process */
     /* close the unused end of the pipe */ 
-    close(fd[WRITE END]);
+    close(fd[WRITE_END]);
     
     /* read from the pipe */
-    read(fd[READ END], read msg, BUFFER SIZE); 
-    printf("read %s",read msg);
+    read(fd[READ_END], read_msg, BUFFER SIZE); 
+    printf("read %s",read_msg);
      /* close the write end of the pipe */
-     close(fd[READ END]);
+     close(fd[READ_END]);
   }
   return 0;
 }
