@@ -125,7 +125,7 @@ One plausible solution is that the process must request all resources at the beg
 
 Unfortunately, this requires some amount of clairvoyance: a process has to know in advance all of the resources that it will need. Remember that a file is a resource, and even a simple program like a text editor can be used by the user to open an arbitrary file; how do we know in advance which will be requested?
 
-This also has performance implications: a process cannot start until it has all the resources it will ever need, even if it will not need them until much later. Thus, processes might spend a lot of time waiting before starting; something that users may not tolerate. In theory, a process might never start if one ore more of the resources it needs is always in use (so this is vulnerable to starvation).
+This also has performance implications: a process cannot start until it has all the resources it will ever need, even if it will not need them until much later. Thus, processes might spend a lot of time waiting before starting; something that users may not tolerate. In theory, a process might never start if one or more of the resources it needs is always in use (so this is vulnerable to starvation).
 
 An alternative is that a process must release all its currently-held resources before it can get any new ones. So, if the process has $R_{1}$ and $R_{2}$ and wants to get $R_{3}$ (and needs all three), the process must first release $R_{1}$ and $R_{2}$ before it can request all three of them. 
 
