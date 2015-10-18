@@ -89,7 +89,7 @@ bool push_front( single_list_t *list, void *obj ) {
 }
 \end{verbatim}
 
-If only one thread access this data structure, we do not have a problem, but it was a shared linked list. Suppose a thread runs and tries to add an element $A$ to the list using the \texttt{push\_front} function. Right before the increment of the \texttt{size} field takes place there is a process switch. At this point, the new node has been allocated and initialized, the pointers of \texttt{head} and \texttt{tail} have been updated, but \texttt{size} is 0. 
+If only one thread can access this data structure, we do not have a problem, but it was a shared linked list. Suppose a thread runs and tries to add an element $A$ to the list using the \texttt{push\_front} function. Right before the increment of the \texttt{size} field takes place there is a process switch. At this point, the new node has been allocated and initialized, the pointers of \texttt{head} and \texttt{tail} have been updated, but \texttt{size} is 0. 
 
 \begin{center}
 \includegraphics[width=0.25\textwidth]{images/linkedlist1.png}\\
