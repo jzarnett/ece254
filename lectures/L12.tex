@@ -6,7 +6,7 @@
 
 \section*{Mutual Exclusion through Messages}
 
-The earlier definition of mutual exclusion said only that one thread may be in the critical section at a time. This is the minimum, but there additional desirable properties that will be used to evaluate any solution~\cite{osi}:
+The earlier definition of mutual exclusion said only that one thread may be in the critical section at a time. This is the minimum, but there are additional desirable properties that will be used to evaluate any solution~\cite{osi}:
 \begin{enumerate}
 	\item Mutual exclusion must apply (this criterion eliminated most of the flag examples earlier).
 	\item A thread that halts outside the critical section must not interfere with other threads (the strict alternation routine, even if implemented with Test-and-Set, would fail on this criterion).
