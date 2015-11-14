@@ -116,7 +116,7 @@ The worst fit algorithm is not shown, but it would overlap with the placement in
 
 \subsubsection*{Choosing a Strategy}
 
-According to~\cite{osc}, simulations show that worst fit performs, well, worst in terms of time required to fulfill an allocation request and that it results in the most wasted space. First (next) and best fit are about equal in how well they utilize memory, but first fit tends to be faster. Despite this, even with optimization, given $x$ allocated blocks, another 0.5$x$ blocks may be lost to fragmentation.
+According to~\cite{osc}, simulations show that worst fit performs, well, worst in terms of time required to fulfill an allocation request and that it results in the most wasted space. The performance problems of worst fit can be fixed, of course, by keeping the memory blocks in a max heap, but that still does not address the wasted space problem. First (next) and best fit are about equal in how well they utilize memory, but first fit tends to be faster. Despite this, even with optimization, given $x$ allocated blocks, another 0.5$x$ blocks may be lost to fragmentation.
 
 This is supported by~\cite{osi}, whose analysis also indicates that first fit is the fastest and best algorithm. The next fit algorithm tends to do allocations at the end of memory, so the largest block of free memory (typically at the end) is quickly broken up. On the other hand, first fit tends to litter the beginning of memory with small fragments. Best fit tends to produce free blocks that are too small to be useful. 
 
