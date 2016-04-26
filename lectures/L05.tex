@@ -127,6 +127,27 @@ The Admit transition is modified to show that by default the new process does no
 
 As in the five-state model, there are additional ``Exit'' transitions that may happen but are not shown. If a process is killed, for example, regardless of whether it is in memory or on disk, it will move to the Terminated state.
 
+\subsection*{Preview of Scheduling}
+
+Processes, represented by their PCB, are maintained in a data structure; typically a linked list or a queue of some sort. For efficiency reasons, it would not make sense to have all processes in one single linked list that we would have to iterate over. If there are 200 processes and the next ready one is number 137, it's a lot of iterations... So it is logical to take non-ready processes out of this list.
+
+When a process is in some state like ``Blocked'', where does it go? This is a question we will come back to when we discuss scheduling in more detail. But for now, it's convenient for the operating system to keep track of what processes are in which states separately. If a process is waiting for a disk operation, when the disk becomes available, it would be convenient to know quickly what process(es) is(are) waiting for the disk. See the diagram from~\cite{osc}:
+
+\begin{center}
+\includegraphics[width=0.55\textwidth]{images/pcbs-in-queues.png}\\
+Ready queue and queues on various devices.
+\end{center}
+
+A common way of looking at the way processes move around is in a queueing diagram, as in this example from~\cite{osc}, in which each rectangle represents a queue:
+
+\begin{center}
+\includegraphics[width=0.55\textwidth]{images/queueing-diagram.png}\\
+Queueing diagram for process scheduling.
+\end{center}
+
+A process initially goes into the ready queue until it is selected to run, and then it is executing on the CPU. If it makes an I/O request then it will be placed in an I/O queue, for example, until such time as its request is serviced and then it becomes ready again.
+
+How a process is chosen to run next is a major topic, which we will cover later when we get to the discussion about scheduling.
 
 \input{bibliography.tex}
 

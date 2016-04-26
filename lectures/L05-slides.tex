@@ -360,5 +360,58 @@ As in the five state model, some additional ``Exit'' transitions.
 \end{frame}
 
 
+
+
+\begin{frame}
+\frametitle{A Preview of Scheduling}
+
+Processes, represented by their PCB, are maintained in a data structure; typically a linked list or a queue of some sort. 
+
+For efficiency reasons, it would not make sense to have all processes in one single linked list that we would have to iterate over. 
+
+If there are 200 processes and the next ready one is number 137...
+
+So it is logical to take non-ready processes out of this list.
+
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{E Pluribus... Pluribum?}
+
+When a process is in some state like ``Blocked'', where does it go? 
+
+This is a question we will come back to when we discuss scheduling.
+
+But for now, it's convenient for the operating system to keep track of what processes are in which states separately. 
+
+If a process is waiting for a disk operation, when the disk becomes available, it would be convenient to know quickly what processes are waiting for the disk.
+
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{PCBs in Queues}
+
+\begin{center}
+\includegraphics[width=0.65\textwidth]{images/pcbs-in-queues.png}
+\end{center}
+
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Queueing Diagram}
+
+\begin{center}
+\includegraphics[width=0.75\textwidth]{images/queueing-diagram.png}
+\end{center}
+
+
+\end{frame}
+
 \end{document}
 
