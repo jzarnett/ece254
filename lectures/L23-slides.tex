@@ -19,7 +19,7 @@
 
 
 \begin{frame}
-\frametitle{The Limits of Paging}
+\frametitle{Push it to the Limit}
 
 Even with paging and moving pages into and out of memory, there is a limit. 
 
@@ -34,7 +34,9 @@ Server or supercomputer systems working on large datasets may require more memor
 \begin{frame}
 \frametitle{The Limits of Paging}
 
-Furthermore, when we have many programs running and a multiprocessor systems, we could have a situation where the sum of memory requirements exceeds the available memory. 
+What about multiprocessor systems?
+
+We could have a situation where the sum of memory requirements exceeds the available memory. 
 
 A processor may be waiting because a process that is otherwise ready to run cannot proceed because there are insufficient free frames for it to run.
 
@@ -385,6 +387,8 @@ If performance of the computer is to be reasonable, say around 10\%, the page fa
 And now you also know why solid state drives, SSDs, are such a huge performance increase for your computer. 
 
 Instead of spending time measured in the milliseconds to find a page on disk, SSDs produce the data with times that look more like memory reads.
+
+(Take the technical elective Programming for Performance to learn why this, while faster, is not fast enough.)
 
 
 \end{frame}

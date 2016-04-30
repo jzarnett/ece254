@@ -66,6 +66,8 @@ The size of an integer (4 bytes) is supplied to \texttt{malloc()}; 4 bytes are a
 
 When you \texttt{free()} that pointer, the memory is marked as available.
 
+It is not necessarily cleared or reused right away.
+
 This is why you can sometimes get away with dereferencing a pointer after it has been freed. 
 
 Sometimes it takes a while for that memory to be reclaimed or reused so the old value just happens to still be there in memory. 
