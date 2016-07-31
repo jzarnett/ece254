@@ -65,7 +65,7 @@ Initially, $R$ and $M$ are 0. Periodically, the $R$ bit is cleared to distinguis
 	\item Referenced, modified.
 \end{enumerate}
 
-The OS will prefer to to remove a page from the lowest-numbered class, when possible. This NRU algorithm is fairly easy to understand and may provide adequate performance.
+The OS will prefer to remove a page from the lowest-numbered class, when possible. This NRU algorithm is fairly easy to understand and may provide adequate performance.
 
 \paragraph{First-In-First-Out.}
 First-In-First-Out is quite easy to understand and implement; the idea is some sort of temporal locality. If there are $N$ frames, keep a counter that points to the frame that is to be replaced (the counter ranges from $0$ to $N-1$). Whenever a page needs to be replaced, replace the page at the counter index and increment the counter, wrapping around to 0 where necessary.
