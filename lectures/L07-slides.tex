@@ -362,7 +362,7 @@ A queue may alleviate the problem or just ``kick the can down the road''.
   
  If the queue is of (effectively) unlimited size, no problem!
  
- If the queue has a fixed size then the problem is put off but not solved .
+ If the queue has a fixed size then the problem is put off but not solved.
  
  The sender can keep adding messages until the queue is full. 
  
@@ -451,7 +451,9 @@ It takes the output of the \texttt{cat} program and delivers it as input to \tex
 \begin{frame}[fragile]
 \frametitle{Pipe Code Example}
 
-Use \texttt{fork} to spawn a new child process and then setting up a communication pipe between the parent and child. We will send a message ``Greetings'' from the parent to the child.
+Use \texttt{fork} to spawn a new child process and then setting up a communication pipe between the parent and child. 
+
+We will send a message ``Greetings'' from the parent to the child.
 
 \begin{verbatim}
 
@@ -509,6 +511,8 @@ Use \texttt{fork} to spawn a new child process and then setting up a communicati
 
 \end{verbatim}
 
+\texttt{READ\_END} is defined as \texttt{0} in a \texttt{\#define} directive.\\
+\texttt{WRITE\_END} is defined as \texttt{0} in a \texttt{\#define} directive.\\
 
 \end{frame}
 
@@ -523,7 +527,7 @@ Use \texttt{fork} to spawn a new child process and then setting up a communicati
     close(fd[WRITE_END]);
     
     /* read from the pipe */
-    read(fd[READ_END], read_msg, BUFFER SIZE); 
+    read(fd[READ_END], read_msg, BUFFER_SIZE); 
     printf("read %s",read_msg);
      /* close the write end of the pipe */
      close(fd[READ_END]);
