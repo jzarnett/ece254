@@ -84,7 +84,7 @@ bool push_front( single_list_t *list, void *obj ) {
      list->tail = tmp;
   }
   
-   ++(list->size);
+   ++( list->size );
    return true;
 }
 \end{verbatim}
@@ -116,7 +116,7 @@ This is an \textit{inconsistent state}: the linked list has two elements in it b
 The linked list problem just discussed can be solved easily if a semaphore is employed. The syntax we will use is as follows:
 
 \texttt{semaphore\_init( semaphore\_t *sem, int i )}\\
-Initialize the semaphore to \texttt{n} (can be 0 or 1).
+Initialize the semaphore to \texttt{i} (can be 0 or 1).
 
 \texttt{semaphore\_wait( semaphore\_t *sem )}\\
 Wait on a semaphore.
@@ -150,7 +150,7 @@ void single_list_init( single_list_t *list ) {
   list->tail = NULL;
   list->size = 0;
 
-  semaphore_init( &( list->mutex), 0 );
+  semaphore_init( &( list->mutex ), 0 );
 }
 
 bool push_front( single_list_t *list, void *obj ) {
@@ -170,7 +170,7 @@ bool push_front( single_list_t *list, void *obj ) {
     if ( list->size == 0 ) {
        list->tail = tmp;
     }
-    ++(list->size);
+    ++( list->size );
   
   } semaphore_signal( &( list->mutex ) );
   
