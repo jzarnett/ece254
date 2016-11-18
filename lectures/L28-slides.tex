@@ -376,7 +376,7 @@ Periodic tasks are very common: check a sensor, decode and display a frame of vi
 
 Consider a periodic task to have two attributes: 
 
-1. $\tau_{k}$, the period (how often the task takes); and 
+1. $\tau_{k}$, the period (how often the task occurs); and 
 
 2. $c_{k}$, the computation time (how long, in the worst case, the task might run).
 
@@ -387,7 +387,7 @@ Consider a periodic task to have two attributes:
 
 In real-time systems we are usually pessimists and care almost exclusively about the worst case scenario. 
 
-We can calculate the processor utilization of period tasks according to the following formula, to get the long-term average of processor utilization $U$:
+We can calculate the processor utilization of periodic tasks according to the following formula, to get the long-term average of processor utilization $U$:
 
 \begin{center}
 $U = \sum\limits_{k=1}^n\dfrac{c_{k}}{\tau_{k}}$
@@ -399,7 +399,7 @@ If $U > 1$, it means the system is overloaded.
 
 \begin{frame}
 \frametitle{Overload}
-If overloaded: there are too many period tasks and we cannot guarantee that the system can execute all tasks and meet the deadlines. 
+If overloaded: there are too many periodic tasks and we cannot guarantee that the system can execute all tasks and meet the deadlines. 
 
 Otherwise, we will be able to devise a schedule that makes it all work.
 
