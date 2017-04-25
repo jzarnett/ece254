@@ -2,7 +2,7 @@
 
 \begin{document}
 
-\lecture{ 27 --- Scheduling, Idling, Priorities, and Queues }{\term}{Jeff Zarnett}
+\lecture{ 27 --- Scheduling: Idling, Priorities, Multiprocessor}{\term}{Jeff Zarnett}
 
 \section*{Scheduling Algorithms, Continued}
 
@@ -65,59 +65,82 @@ A famous case of priority inversion took place on the Mars Pathfinder rover. In 
 
 The Pathfinder solution was to enable priority inheritance on the information bus semaphore. This meant that the low priority task would get a higher priority than the communication task and would run to completion; then the high priority task would be able to run and the system would not assume a deadlock had occurred. It was, to a certain extent, fortunate that this option was built into the system at all and needed only to be turned on. Doing a major software update on a system that is located \textit{on another planet} is not quite the same as installing Windows updates on Patch Tuesday.
 
+\section*{Multiprocessor Scheduling}
+If you thought scheduling for a single processor was complicated enough, well, things are about to get exponentially harder. When we have more than one processor working on things at a time, then the complexity increases dramatically. 
 
+We can classify multiprocessor systems into three major buckets~\cite{osi}:
 
-\section*{Queueing Analysis (or: Oh no! Math!)}
-Given the various scheduling routines, we can do an analysis of the effectiveness of some of them. We will assume that processes arrive according to a Poisson distribution (that is to say, they arrive randomly... let's not get dragged into a debate about the various distributions), and we have exponential service times. 
+\begin{enumerate}
+	\item \textbf{Distributed}. We have a collection of relatively autonomous systems who interact. For more about this, take the class distributed systems.
+	\item \textbf{Functionally Specialized}. The system has lots of specialized chips working on their specific area (but we'll come back to this when we talk about I/O scheduling).
+	\item \textbf{Tightly Coupled}. A set of processors that share a common main memory and are under the control of the operating system. This is the kind we're most familiar with and going to examine here.
+\end{enumerate}
 
-
-Note that any scheduling relationship that chooses the next item without caring how long it will run (the expected service time) obeys this relationship~\cite{osi}:
-
-\begin{center}
-	$\dfrac{T_{r}}{T_{s}} = \dfrac{1}{1 - \rho}$
-\end{center}
-
-where: $T_{r}$ is the turnaround time (waiting plus execution); $T_{s}$ is the service time (average time in running state); and $\rho$ is the processor utilization.
-
-This includes priority-scheduling, where the priority is assigned by some means other than based on their (predicted or known) execution times. If we do make a distinction based on the expected service times, then we get some meaningful results. In our scenario, we will have two different priority classes (``high'' and ``low'', how exciting) with different service times. Preemption, in this context, means that a low priority process will be interrupted as soon as a higher priority process is ready. See the table below:
+Then we have to worry about the interactions of various processes. Specifically, how often they plan to interact. See this table (from~\cite{osi} again) that provides an overview of the granularities:
 
 \begin{center}
-	\includegraphics[width=\textwidth]{images/queue-formulae.png}\\
-	Formulae for Single-Server Queues with Two Priorities~\cite{osi}.
+\begin{tabular}{l|l|l}
+	\textbf{Grain Size} & \textbf{Description} & \textbf{Interval (Instructions)}\\ \hline
+	Fine & Single instruction stream & $< 20$ \\\hline
+	Medium & Single application & $20 - 200$ \\\hline
+	Coarse & Multiple processes & $200 - 2000$ \\\hline
+	Very Coarse & Distributed computing & $2000 - 1$M \\\hline
+	Independent & Unrelated processes & N/A \\
+
+\end{tabular}
 \end{center}
 
-Let us assume we have an equal number of arrivals between high and low priorities and that low priority tasks take about five times as long as high priority tasks. Let us look at the overall result, and then break it down into the response times for shorter processes and longer processes.
+To sum it all up, the finer-grained the parallelism, the more care and attention needs to be given to how we are going to schedule a process in a multiprocessor system. If the processes are totally independent, then there is not too much to worry about; if we are taking a single process's thread and doing different instructions on different CPUs, then we have to be very careful to make sure that the execution is correct.
+
+If we choose asymmetric multiprocessing, we have a boss processor and this one alone is responsible for assigning work and managing the kernel data structures (e.g., process control blocks). If instead, the system uses symmetric multiprocessing, each processor is responsible for scheduling itself. We will need to make use of mutual exclusion and other synchronization techniques in the kernel to prevent errors in managing the execution of processes. We do not want to have two processors trying to dequeue from the ready queue at the same time, after all.
+
+\subsection*{Processor Affinity}
+Let us imagine that every processor has its own cache (e.g., the L1, L2, \& L3 caches). If that is the case, then we want to have \textit{processor affinity}. After some period of time of executing on this processor, a process will have a bunch of its data in the cache of that processor. If the process begins executing on another processor, all the data is in the ``wrong'' cache and there will be a lot more cache misses (which will slow down execution). Ideally, then we will keep executing on the same processor, wherever possible. This desire to stick with a certain processor is called processor affinity.
+
+If the OS is just going to make an effort but not guarantee that a process runs on a given processor, that is called \textit{soft affinity}. A process can move from one processor to another, but will not do so if it can avoid it. The alternative is \textit{hard affinity}: a process will only run on a specified processor (or set of processors). Linux, for example, has both soft and hard affinity~\cite{osc}.
+
+Another motivation why we might want to lock a process to a particular processor occurs when memory accesses are non-uniform. For the most part we assume that any memory read takes as much time as any other, and if we have one bus connecting the CPU to all of main memory, that is a safe assumption. If the CPU can access some parts of memory faster than others, the system has \textit{non-uniform memory access} (NUMA). See the diagram below:
 
 \begin{center}
-	\includegraphics[width=0.63\textwidth]{images/overall-response-time.png}\\
-	Overall normalized response time~\cite{osi}.
+	\includegraphics[width=0.5\textwidth]{images/numa.png}\\
+	A system with Non-Uniform Memory Access (NUMA) times~\cite{osc}.
 \end{center}
 
-\vspace{-2em}
+If we have this situation, then our choice of processor should be based on where the memory of the process is located. The memory allocation routine should also pay attention to where to allocate memory requests, preferring to keep the program code together in memory. If there is data in one of the other blocks of memory, it does not mean game over, but it means slower execution.
+
+\subsection*{Load Balancing}
+It is presumably obvious that if we have 4 processors, it is less than ideal to have one processor at 100\% utilization and 3 processors sitting around doing nothing. We want to keep the workload balanced between all the different systems. The process for this is \textit{load balancing}.
+
+Load balancing is typically necessary only where each processor has its own private queue of processes to run (the ``grocery store queue'' model); if there is a common ready queue (the ``bank queue'' model) then load balancing will tend to happen all on its own, as a processor with nothing to do will simply take the next process from the queue. But in most of the modern operating systems we are familiar with, each processor does have a private queue, so we need to do load balancing~\cite{osc}.
+
+There are two, non-exclusive approaches to redistributing the load: \textit{push} and \textit{pull} migration. It is called migration because a process migrates from one processor to another (it moves homes). If there is push migration, a task periodically checks how busy each processor is and then moves processes around to balance things out (to within some tolerance). Pull migration is when a processor with nothing to do ``steals'' a process from the queue of a busy processor. The Linux and FreeBSD schedulers, for example, use both~\cite{osc}.
+
+Load balancing, as you can imagine, sometimes conflicts with processor affinity. If a process has a hard affinity for a processor, it cannot be migrated from one processor to another. If there is a soft affinity, it can be moved, but it is presumably not our first choice and we will move that process only if we have no other option. Even then, we might consider what to do: should we always move a process despite the fact that it means a whole bunch of cache misses? Should we never do so and leave processors idle? Perhaps the best thing to do is to put a certain ``penalty'' on moving and only move a process from one queue to another if it would be worthwhile (i.e., the imbalance is sufficiently large).
+
+\subsection*{Multicore Processors}
+Before the early 2000s, the only way to get multiple processors in the system was to have multiple physical chips. But if you open up your laptop you are likely to find one physical chip. What gives? \textit{Multicore processors}. As far as the operating system is concerned, a quad-core chip is made of four logical processors, but it's all in one package and this can be faster and more convenient.
+
+When a processor issues a memory read or write that is a cache miss (so the read has to go to memory), the CPU core can spend a lot of time (perhaps as much as 50\%) of its time waiting for that read to take place. We might refer to periods of time where there is computation as a compute cycle, and time spent waiting for memory as a \textit{memory stall}. These tend to alternate, though the length of time for each will vary significantly. It's all a question of how often memory is accessed and how many cache misses there are. See the diagram below:
 
 \begin{center}
-	\includegraphics[width=0.63\textwidth]{images/shorter-response-time.png}\\
-	Shorter process normalized response time~\cite{osi}.
+	\includegraphics[width=0.7\textwidth]{images/memory-stall.png}\\
+	Alternating compute and memory stall cycles~\cite{osc}.
 \end{center}
 
-\vspace{-2em}
+During a memory stall, the processor core may have nothing to do. As you might learn about if you take a course in processor design or programming for performance, you can sometimes move instructions around so that the memory read goes out ``early'' and a few other instructions can be executed in the meantime. 
+
+To offset this problem, the solution was originally called \textit{hyperthreading}: two threads are assigned to each core; if one thread does a memory access or stalls, the code can switch to another thread with a limited penalty. The first CPU I had with hyperthreading was a Pentium IV (it was 2003), and it had one physical core but it would seemingly work on two threads at a time. See below:
 
 \begin{center}
-	\includegraphics[width=0.63\textwidth]{images/longer-response-time.png}\\
-	Longer process normalized response time~\cite{osi}.
+	\includegraphics[width=0.7\textwidth]{images/hyperthreading.png}\\
+	Hyper threading in a single CPU core~\cite{osc}.
 \end{center}
 
-\paragraph{Simulation Modelling.} Rather than just guessing about what strategy of scheduling is most effective, let us do some studies. A simulation as described in~\cite{fink} involved 50~000 processes with an arrival rate of $\lambda = 0.8$ and $T_{s} = 1$. Thus the assumption is that processor utilization $\rho$ is also 0.8. Each process is grouped into service time percentiles of 500 processes. The 500 processes with the shortest service times make the first percentile, and so on. Let us see the turnaround and waiting times, according to the simulation:
+If we have coarse-grained multithreading, a thread will execute for a while and when there is a memory stall (or some other reason why a process gets blocked) then the processor will swap to another thread or process, flushing the instruction pipeline. That is expensive. If we have fine-grained multithreading, it looks more like the diagram above where we have alternation between two threads that are in the pipeline at the same time. The cost of switching between these two threads is small~\cite{osc}.
 
-\begin{center}
-	\includegraphics[width=0.85\textwidth]{images/turnaround-time.png}\\
-	Turnaround time simulation result~\cite{osi}.
-\end{center}
+So now we have two different levels of scheduling: assigning a process or thread to a processor (the job of the operating system) and deciding when to swap between the two threads in the core (typically the job of the hardware). 
 
-\begin{center}
-	\includegraphics[width=0.85\textwidth]{images/wait-time.png}\\
-	Waiting time simulation result~\cite{osi}.
-\end{center}
+
 
 
 \input{bibliography.tex}

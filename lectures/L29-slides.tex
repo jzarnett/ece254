@@ -1,6 +1,6 @@
 \input{configuration}
 
-\title{Lecture 29 --- Scheduling in UNIX, Linux, \& Windows }
+\title{Lecture 29 --- Scheduling in Linux }
 
 \author{Jeff Zarnett \\ \small \texttt{jzarnett@uwaterloo.ca}}
 \institute{Department of Electrical and Computer Engineering \\
@@ -16,112 +16,6 @@
  \end{frame}
  
  
-
-\begin{frame}
-\frametitle{Scheduling in Desktop OSes}
-
-In this lecture we will examine how real commercial operating systems schedule their processes and threads. 
-
-We will examine UNIX, Linux, and finally Windows scheduling. 
-
-We will see what approaches are used and what is interesting/novel about them.
-
-
-\end{frame}
-
-\begin{frame}
-\frametitle{Traditional UNIX}
-
-The traditional UNIX scheduling is really ancient; as in System V R3 and BSD 4.3.\\
-\quad It was replaced in SVR4 (which had some real-time support).
-
-Multilevel feedback system using Round Robin within each of the queues. 
-
-Time slicing is implemented and the default time slice is a (very long) 1 second. 
-
-So if a process does not block or complete within 1~s, then it will be preempted. 
-
-Priority is based on the process type as well as the execution history.
-
-\end{frame}
-
-\begin{frame}
-\frametitle{Traditional UNIX}
-
-Processor utilization for a process $j$ is calculated for an interval $i$ as:
-
-\begin{center}
-$CPU_{j}(i) = \dfrac{CPU_{j}(i - 1)}{2}$
-\end{center}
-
-And the priority is for process $j$ at interval $i$ is calculated by the formula:
-
-\begin{center}
-$P_{j}(i) = B_{j} + \dfrac{CPU_{j}}{2} + N_{j}$
-\end{center}
-
-where $B_{j}$ is the base priority of process $j$ and $N_{j}$ is the ``nice'' value of process $j$.
-
-
-\end{frame}
-
-\begin{frame}
-\frametitle{Be Nice}
-
-The ``nice'' value is a UNIX way to allow a user to voluntarily reduce the priority of a process to be ``nice'' to other users (but honestly, who uses this?).
-
-Actually, the answer to that question is: system administrators. 
-
-An admin can ``re-nice'' a process and make it somewhat nicer than it would otherwise be.
-
-
-\end{frame}
-
-\begin{frame}
-\frametitle{Traditional UNIX}
-
-The $CPU$ and $N$ components of the equation are restricted to prevent a process from migrating outside of its assigned category. 
-
-A process is assigned to a given category based on what kind of process it is. 
-
-To put it in simple terms, the OS puts its own needs first and tries to make the best use of resources it can.
-
-
-\end{frame}
-
-\begin{frame}
-\frametitle{Traditional UNIX}
-
-From highest to lowest priority, the categories are:
-
-\begin{enumerate}
-	\item Swapper (move processes to and from disk)
-	\item Block I/O device control (e.g., disk)
-	\item File manipulation
-	\item Character I/O device control (e.g., keyboard)
-	\item User processes
-\end{enumerate}
-
-
-
-\end{frame}
-
-\begin{frame}
-\frametitle{Traditional UNIX}
-
-Yes, unfortunately, user processes get piled at the bottom of the list. 
-
-It should provide for efficient use of I/O devices and tends to penalize processor-bound processes at the expense of I/O bound processes. 
-
-CPU-bound processes should be able to carry on executing when an I/O-bound process waits for the I/O operation to complete. 
-
-When an I/O operation is finished, we would like to start the next I/O operation so the I/O device is not waiting.
-
-This strategy is reasonably effective for a general-purpose, time-sharing operating system.
-
-
-\end{frame}
-
 \begin{frame}
 \frametitle{Linux}
 
@@ -447,89 +341,171 @@ Within the group, the scheduler will try to treat the threads or processes fairl
 
 \end{frame}
 
+
+
+
 \begin{frame}
-\frametitle{Windows Scheduling}
+\frametitle{A Decade of Wasted Cores}
 
-Windows schedules threads using a priority-based, preemptive scheduling algorithm, ensuring that the highest priority thread runs. 
+2016: researchers exposed serious problems in the scheduler. 
 
-The official name for the selection routine is the \alert{dispatcher}.
+The authors found four significant bugs in Linux multicore scheduling such that there were threads waiting to run even when cores were sitting idle. 
 
-A thread runs until it is preempted, blocks, terminates, or its time slice expires. 
+Performance degradation is in the range of 13-24\%, but may be as much as 138 times when looking at some corner cases. 
 
 \end{frame}
 
+
+
 \begin{frame}
-\frametitle{Windows Scheduling}
+\frametitle{All Roads Lead to Rome}
 
-If a higher priority thread is unblocked, it will preempt a lower priority thread. 
+There are four different problems but they all cause the same behaviour. \\
+\quad Cores are left idle when runnable threads are waiting to execute. 
 
-Windows has 32 different priority levels, the regular (priority 1 to 15) and real-time classes (16 to 31). 
+If it is brief, it is not a problem.
 
-A memory management task runs at priority 0.
+Moving a thread takes some ``effort'' on the part of the scheduler.\\
+\quad It may be better to leave it alone. 
 
-The dispatcher maintains a queue for each of the scheduling priorities and goes through them from highest to lowest until it finds something to do.
-
-If there is nothing else currently ready, the System Idle Process will ``run''.
+But if that thread is waiting an unreasonably long time (in the few hundred milliseconds) then it is a problem.
 
 \end{frame}
 
+
+
 \begin{frame}
-\frametitle{Windows Priority Classes}
+\frametitle{Be Fair to Everyone}
 
-There are six priority classes you can set a process to via Task Manager:
+Recall from earlier the completely fair scheduler we have discussed. 
 
-\begin{enumerate}
-	\item Realtime
-	\item High
-	\item Above Normal
-	\item Normal
-	\item Below Normal
-	\item Low
-\end{enumerate}
+There will be multiple run queues, one for each core. 
 
-A process is usually in the Normal class.
+If CPU 0 has 1 low priority thread and CPU 1 has 3 high priority threads, high priority threads will run less than the low priority thread. 
+
+Linux will periodically try to keep the queues balanced.
 
 \end{frame}
 
+
+
 \begin{frame}
-\frametitle{Windows Thread Priorities}
+\frametitle{Do What You Must}
+
+Load balancing is expensive and will run periodically but not often.\\
+\quad A completely idle core will result in emergency load balancing.
+
+Load balancing is just look at how busy each of the cores is and move things from the most busy to the least busy core, right?
+
+That oversimplifies the solution because it does not consider cache locality or non-uniform memory access.
+
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Multiple Nodes}
+
+Thus, above the level of each core is a larger unit, a scheduling domain. 
+
+Scheduling domains are configured by what hardware they have in common.
 
 \begin{center}
-	\includegraphics[width=\textwidth]{images/windows-thread-priorities.png}
+	\includegraphics[width=0.7\textwidth]{images/wastedcores.png}\\
 \end{center}
 
 \end{frame}
 
+
+
 \begin{frame}
-\frametitle{Windows Time Slicing}
+\frametitle{The Four Bugs}
 
-If a process reaches the end of a time slice, the thread is interrupted.
-
-Unless it is in the real-time category, its priority will be lowered, to a minimum of the base priority of each class. 
-
-When a process that was blocked on something (e.g., a wait or I/O), its priority is temporarily boosted (unless it is real-time, in which case it cannot be boosted). 
-
-The amount of the boost depends on what the event was.
-
-A process that was waiting for keyboard input gets a bigger boost than one that was waiting for a disk operation, for example.
+So what are the four bugs that caused this problem?
+\begin{enumerate}
+	\item The group imbalance bug
+	\item The scheduling group construction bug
+	\item The overload on wakeup bug
+	\item The missing scheduling domains bug
+\end{enumerate}
 
 \end{frame}
 
+
+
 \begin{frame}
-\frametitle{Windows Priority: UI}
+\frametitle{The Group Imbalance Bug}
 
-The operating system also gives a priority to whatever process is running in the selected foreground window. 
+Cores would steal work from other cores if the average load of the victim scheduling group is higher than the average load of the one doing the stealing. 
 
-This is different from foreground vs. background processes, because the definition of a foreground process was one that was user-interactive. 
+But averages can be misleading! 
 
-Here, the distinction is which of the user-interactive processes is currently ``on top'' in the UI. 
+The fix is to use the minimum load of the group, meaning the load of the least loaded core of the group. 
 
-Not only does this process get a priority boost, but it also gets longer time slices. 
+This means cores will steal more often, but this is better than leaving them idle. 
 
-It highlights the different heritages of Windows and UNIX...
+This can result in a 13\% decrease in the runtime of \texttt{make}.
 
 \end{frame}
 
+
+
+\begin{frame}
+\frametitle{Scheduling Group Construction}
+
+The Linux \texttt{taskset} command slows applications to be pinned to specific cores. 
+
+If the nodes are two hops apart, the load balancing thread might not steal them. 
+
+This is because all groups are constructed from the perspective of core 0. 
+
+If load balancing is running on core 31 it might not steal from a neighbour.\\
+\quad It thinks it is too far away because it is two hops from core 0.
+
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Overload on Wakeup}
+
+We have already discussed the idea of processor affinity, but sometimes, too much of a good thing is a problem. 
+
+If a thread goes to sleep on node 1, when it and it gets unblocked later by some other thread, the scheduler will try to put it on one of the cores in node 1... 
+
+Even if other nodes are not busy! 
+
+This will reduce the number of cache misses, sure, but it means sometimes a thread gets in a queue that's busy rather than one that's free.
+
+\end{frame}
+
+
+
+
+\begin{frame}
+\frametitle{Missing Scheduling Domains}
+
+The last bug appears to have been caused by an error during refactoring. 
+
+When a core was removed and re-added, an important function was no longer invoked, due to an error when refactoring.
+
+This could cause all threads of an application to run on a single code instead of all of them. 
+
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Scheduling is Hard}
+
+In conclusion: scheduling is by no means a solved problem. 
+
+A simple scheduling algorithm that worked reasonably well in a single core environment was not adequate to the multiple core world. 
+
+Averages can be misleading...\\
+\quad And optimizations sometimes do more harm than good. 
+
+\end{frame}
 
 \end{document}
 
