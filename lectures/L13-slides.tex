@@ -424,7 +424,7 @@ The $n$th thread to arrive should signal $n-1$ times:
 	2. count++
 	3. signal( mutex )
 	4. if count == n
-	5.     for i from 1 to  n-1
+	5.     for i from 1 to  n
 	6.         signal( barrier )
 	7.     end for
 	8. end if
