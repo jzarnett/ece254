@@ -412,7 +412,7 @@ void single_list_init( single_list_t *list ) {
   list->tail = NULL;
   list->size = 0;
 
-  semaphore_init( &( list->mutex ), 0 );
+  semaphore_init( &( list->mutex ), 1 );
 }
 \end{verbatim}
 
