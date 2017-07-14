@@ -453,7 +453,7 @@ This can result in a 13\% decrease in the runtime of \texttt{make}.
 \begin{frame}
 \frametitle{Scheduling Group Construction}
 
-The Linux \texttt{taskset} command slows applications to be pinned to specific cores. 
+The Linux \texttt{taskset} command allows applications to be pinned to specific cores. 
 
 If the nodes are two hops apart, the load balancing thread might not steal them. 
 
@@ -487,9 +487,9 @@ This will reduce the number of cache misses, sure, but it means sometimes a thre
 
 The last bug appears to have been caused by an error during refactoring. 
 
-When a core was removed and re-added, an important function was no longer invoked, due to an error when refactoring.
+When a core was removed and re-added, an important function was no longer invoked.
 
-This could cause all threads of an application to run on a single code instead of all of them. 
+This could cause all threads of an application to run on a single core instead of all of them. 
 
 \end{frame}
 
