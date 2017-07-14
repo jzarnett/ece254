@@ -18,13 +18,13 @@ In Windows you can set a high priority (e.g. level 31) to a process and it calls
 \subsection*{Timeline Scheduling}
 If a process or task recurs at regular intervals, it is \textit{periodic} -- repeats at a fixed period. Periodic tasks are very common: check a sensor, decode and display a frame of video to a screen, keep the wifi connection alive, etc.
 
-Consider a periodic task to have two attributes: $\tau_{k}$, the period (how often the task takes) and $c_{k}$, the computation time (how long, in the worst case, the task might execute). In real-time systems we are usually pessimists and care almost exclusively about the worst case scenario. We can calculate the processor utilization of period tasks according to the following formula, to get the long-term average of processor utilization $U$~\cite{mte241}:
+Consider a periodic task to have two attributes: $\tau_{k}$, the period (how often the task occurs) and $c_{k}$, the computation time (how long, in the worst case, the task might execute). In real-time systems we are usually pessimists and care almost exclusively about the worst case scenario. We can calculate the processor utilization of periodic tasks according to the following formula, to get the long-term average of processor utilization $U$~\cite{mte241}:
 
 \begin{center}
 $U = \sum\limits_{k=1}^n\dfrac{c_{k}}{\tau_{k}}$
 \end{center}
 
-If $U > 1$, it means the system is overloaded: there are too many period tasks and we cannot guarantee that the system can execute all tasks and meet the deadlines. Otherwise, we will be able to devise a schedule of some sort that makes it all work.
+If $U > 1$, it means the system is overloaded: there are too many periodic tasks and we cannot guarantee that the system can execute all tasks and meet the deadlines. Otherwise, we will be able to devise a schedule of some sort that makes it all work.
 
 If the only tasks in the system are periodic ones, then we can create a fixed schedule for them. This is what the university administrators do when they create the schedule of classes for a given term. Every Monday, for example, from 13:30-14:50, course ECE~254 (a ``process'', if you will) takes place in classroom EIT~1015 (a resource). There is no way to have two classes in the same lecture hall at the same time, so if there are more requests for room reservations than rooms and time slots available, it means some requests cannot be accommodated.
 
