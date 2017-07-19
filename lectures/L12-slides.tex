@@ -476,7 +476,7 @@ A thread that signals on the semaphore will increment the integer by 1.
 \begin{frame}
 \frametitle{General Semaphores}
 
-If a thread attempts to wait on a semaphore and the decrement operation makes the integer value zero or negative, the calling thread is blocked. 
+If a thread attempts to wait on a semaphore and the decrement operation makes the integer value negative, the calling thread is blocked. 
 
 If initialized with 5 and the current value is 2, a thread that waits on that general semaphore will not be blocked.
 
