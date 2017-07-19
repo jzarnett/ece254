@@ -56,7 +56,7 @@ If this happens, it may be that there is a contiguous block of free memory avail
 The ``checkerboard'' situation with the adjacent free blocks coalesced~\cite{mte241}.
 \end{center}
 
-\paragraph{Coalescence.} Coalescence is just the process or merging two (or more) adjacent free blocks into one larger block. It also makes sense that dividing memory should be a reversible operation. This solves the problem of a block of $N$ contiguous bytes being unable to be allocated. Coalescence can be done periodically or whenever a block of memory is freed.
+\paragraph{Coalescence.} Coalescence is just the process of merging two (or more) adjacent free blocks into one larger block. It also makes sense that dividing memory should be a reversible operation. This solves the problem of a block of $N$ contiguous bytes being unable to be allocated. Coalescence can be done periodically or whenever a block of memory is freed.
 
 As pointed out in~\cite{mte241}, coalescence makes it a good idea to maintain the memory blocks in a doubly-linked list. Recall a linked list has ``next'' pointers connecting the nodes and a doubly-linked list has ``next'' and ``previous'' pointers, to make it easier to traverse the list in both directions. When a block is freed, it may be in the middle of two free blocks, so it is convenient to have previous and next pointers so the adjacent sections can be merged efficiently.
 
