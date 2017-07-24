@@ -113,18 +113,18 @@ Thus, above the level of each core is a larger unit, a scheduling domain. Schedu
 
 \begin{center}
 	\includegraphics[width=0.3\textwidth]{images/wastedcores.png}\\
-	A machine with 32 cores, 4 nodes, and SMT-sharing amongst pairs of cores~\cite{wastedcores}.
+	A machine with 32 cores, 4 groups, and SMT-sharing amongst pairs of cores~\cite{wastedcores}.
 \end{center}
 
-In this image we have multiple levels: three nodes are reachable from the first core (CPU 0) in one hop and the rest reachable in two hops. The scheduler will avoid duplicating work by making sure that one core is responsible for load balancing within that schedule domain. This is the lowest numbered idle core, or the lowest number overall if all are busy. The only way a core can get woken up is for another one to wake it up, and so a core that is busy and notices a lazy one sleeping nearby will wake it up and tell it to do load balancing~\cite{wastedcores2}.
+In this image we have multiple levels: three groups are reachable from the first core (CPU 0) in one hop and the rest reachable in two hops. The scheduler will avoid duplicating work by making sure that one core is responsible for load balancing within that schedule domain. This is the lowest numbered idle core, or the lowest number overall if all are busy. The only way a core can get woken up is for another one to wake it up, and so a core that is busy and notices a lazy one sleeping nearby will wake it up and tell it to do load balancing~\cite{wastedcores2}.
 
 So what are the four bugs that caused this problem? The summary of these bugs from~\cite{wastedcores2}: (1) the group imbalance bug, (2) the scheduling group construction bug, (3) the overload on wakeup bug, and (4) the missing scheduling domains bug.
 
 \paragraph{The Group Imbalance Bug} Cores would attempt to steal work from other cores if the average load of the victim scheduling group is higher than the average load of the one doing the stealing. But averages can be misleading! The fix is to use the minimum load of the group, meaning the load of the least loaded core of the group. This means cores will steal more often, but this is better than leaving them idle. This can result in a 13\% decrease in the runtime of \texttt{make}.
 
-\paragraph{Scheduling Group Construction} The Linux \texttt{taskset} command allows applications to be pinned to specific cores. If the nodes are two hops apart, the load balancing thread might not steal them... This problem arises because all groups are constructed from the perspective of core 0. If, therefore, the load balancing is running on core 31 it might not steal from a neighbouring core because it thinks it is too far away because it is two hops from core 0.
+\paragraph{Scheduling Group Construction} The Linux \texttt{taskset} command allows applications to be pinned to specific cores. If the groups are two hops apart, the load balancing thread might not steal them... This problem arises because all groups are constructed from the perspective of core 0. If, therefore, the load balancing is running on core 31 it might not steal from a neighbouring core because it thinks it is too far away because it is two hops from core 0.
 
-\paragraph{Overload on Wakeup} We have already discussed the idea of processor affinity, but sometimes, too much of a good thing is a problem. If a thread goes to sleep on node 1, when it and it gets unblocked later by some other thread, the scheduler will try to put it on one of the cores in node 1... even if other nodes are not busy. This will reduce the number of cache misses, sure, but it means sometimes a thread gets in a queue that's busy rather than one that's free.
+\paragraph{Overload on Wakeup} We have already discussed the idea of processor affinity, but sometimes, too much of a good thing is a problem. If a thread goes to sleep on group 1, when it and it gets unblocked later by some other thread, the scheduler will try to put it on one of the cores in group 1... even if other groups are not busy. This will reduce the number of cache misses, sure, but it means sometimes a thread gets in a queue that's busy rather than one that's free.
 
 \paragraph{Missing Scheduling Domains}
 The last bug appears to have been caused by an error during refactoring. When a core was removed and re-added a step was skipped after the refactoring changes which could cause all threads of an application to run on a single core instead of all of them. 

@@ -240,9 +240,9 @@ The CFS, written by Ingo Moln\'ar, is not $O(1)$, unfortunately.
 
 It uses a red-black tree to model the ready queue, where processes are inserted based on a linear ordering of execution time. 
 
-The leftmost node in this tree is therefore the task that has spent the least amount of time executing and that is what will be scheduled next. 
+The leftmost group in this tree is therefore the task that has spent the least amount of time executing and that is what will be scheduled next. 
 
-Because a red-black tree remains balanced, the time to access the leftmost node will be $O($ln$(n))$.
+Because a red-black tree remains balanced, the time to access the leftmost group will be $O($ln$(n))$.
 
 Caching could be used to make access to the next task faster.
 
@@ -404,7 +404,7 @@ That oversimplifies the solution because it does not consider cache locality or 
 
 
 \begin{frame}
-\frametitle{Multiple Nodes}
+\frametitle{Multiple Groups}
 
 Thus, above the level of each core is a larger unit, a scheduling domain. 
 
@@ -455,7 +455,7 @@ This can result in a 13\% decrease in the runtime of \texttt{make}.
 
 The Linux \texttt{taskset} command allows applications to be pinned to specific cores. 
 
-If the nodes are two hops apart, the load balancing thread might not steal them. 
+If the groups are two hops apart, the load balancing thread might not steal them. 
 
 This is because all groups are constructed from the perspective of core 0. 
 
@@ -471,9 +471,9 @@ If load balancing is running on core 31 it might not steal from a neighbour.\\
 
 We have already discussed the idea of processor affinity, but sometimes, too much of a good thing is a problem. 
 
-If a thread goes to sleep on node 1, when it and it gets unblocked later by some other thread, the scheduler will try to put it on one of the cores in node 1... 
+If a thread goes to sleep on group 1, when it and it gets unblocked later by some other thread, the scheduler will try to put it on one of the cores in group 1... 
 
-Even if other nodes are not busy! 
+Even if other groups are not busy! 
 
 This will reduce the number of cache misses, sure, but it means sometimes a thread gets in a queue that's busy rather than one that's free.
 
