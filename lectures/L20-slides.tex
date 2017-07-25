@@ -555,11 +555,11 @@ $2^{U}$ is the largest block size that can be allocated (full size of memory).
 
 Initially, memory is treated as a single block of size $2^{U}$. 
 
-If a request of size $n$ occurs, $2^{U-1} \leq n \leq 2^{U}$, then the entire block is allocated. 
+If a request of size $n$ occurs, $2^{U-1} < n \leq 2^{U}$, then the entire block is allocated. 
 
 Otherwise, the block is split into two ``buddies'', of size $2^{U-1}$. 
 
-If $2^{U-2} \leq n \leq 2^{U-1}$, allocate one of the blocks of $2^{U-1}$ to the request.
+If $2^{U-2} < n \leq 2^{U-1}$, allocate one of the blocks of $2^{U-1}$ to the request.
 
 Otherwise, subdivide again. 
  

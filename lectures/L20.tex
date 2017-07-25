@@ -125,7 +125,7 @@ Now let us examine a compromise between fixed and variable allocation, as laid o
 
 In a buddy system, memory blocks are available in powers of 2. More formally, a block is of size $2^{K}$, where $L \leq K \leq U$ and $2^{L}$ is the smallest block size that can be allocated and $2^{U}$ is the largest block size that can be allocated (usually the full size of memory). 
 
-Initially, memory is treated as a single block of size $2^{U}$. If a request of size $n$ occurs such that $2^{U-1} \leq n \leq 2^{U}$, then the entire block is allocated. Otherwise, the block is split into two ``buddies'', of size $2^{U-1}$. If $2^{U-2} \leq n \leq 2^{U-1}$, allocate one of the blocks of $2^{U-1}$ to the request. Otherwise, subdivide again. Repeat until the smallest block greater than or equal to $n$ is allocated. 
+Initially, memory is treated as a single block of size $2^{U}$. If a request of size $n$ occurs such that $2^{U-1} < n \leq 2^{U}$, then the entire block is allocated. Otherwise, the block is split into two ``buddies'', of size $2^{U-1}$. If $2^{U-2} < n \leq 2^{U-1}$, allocate one of the blocks of $2^{U-1}$ to the request. Otherwise, subdivide again. Repeat until the smallest block greater than or equal to $n$ is allocated. 
 
 In subsequent allocations, we look through the data structure, typically a tree, to find either (1) a block of appropriate size; or (2) a block that can be subdivided to meet the allocation. Whenever a pair of buddies (two blocks of equal size, split from the same ``parent'') in the list are both free, they can be coalesced.
 
