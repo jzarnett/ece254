@@ -27,7 +27,7 @@ The rules for \texttt{SCHED\_FIFO} are as follows~\cite{osi}:
 \begin{enumerate}
 	\item The system will only interrupt a FIFO thread if one of the following is true:
 	\begin{enumerate}
-		\item Another FIFO thread of higher priority becomes read.
+		\item Another FIFO thread of higher priority becomes ready.
 		\item The current FIFO thread gets blocked (e.g., on I/O).
 		\item The current FIFO thread yields the CPU with \texttt{sched\_yield}.
 	\end{enumerate}
