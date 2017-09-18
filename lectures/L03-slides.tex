@@ -2,7 +2,7 @@
 
 \title{Lecture 3 --- Operating System Structure; Traps }
 
-\author{Jeff Zarnett \\ \small \texttt{jzarnett@uwaterloo.ca}}
+\author{Jeff Zarnett \& Carlos Moreno \\ \small \texttt{jzarnett@uwaterloo.ca \& \texttt{cmoreno@uwaterloo.ca}}}
 \institute{Department of Electrical and Computer Engineering \\
   University of Waterloo}
 \date{\today}
@@ -228,12 +228,13 @@ C code to perform a read on a UNIX system.
 
 \texttt{read} takes three parameters: 
 \begin{enumerate}
-	\item the file name; 
+	\item the file (a file descriptor, from a previous call 
+to \texttt{open}); 
 	\item where to read the data to; and
 	\item how many bytes to read.
 \end{enumerate} 
 
-\texttt{int bytesRead = read( filename, buffer, numBytes );}
+\texttt{int bytesRead = read( file, buffer, numBytes );}
 
 Note that \texttt{read} returns the number of bytes successfully read.
 

@@ -2,7 +2,7 @@
 
 \begin{document}
 
-\lecture{ 3 --- Operating System Structure and Traps}{\term}{Jeff Zarnett}
+\lecture{ 3 --- Operating System Structure and Traps}{\term}{Jeff Zarnett \& Carlos Moreno}
 
 \section*{Operating System Structure}
 
@@ -98,10 +98,15 @@ An example: multiple programs might be trying to use the same I/O device at once
 This doesn't come for free, of course: there is a definite performance trade-off. Switching from user mode to kernel mode requires some instructions and some time. It would be faster if everything ran in kernel mode because we would spend no time switching. Despite this, the performance hit for the mode switch is judged worthwhile for the security and integrity benefits it provides.
 
 \subsection*{Example: Reading from Disk}
-Let us examine in some more detail what is actually happening in a system call. This example is from~\cite{mos} and will use C code to perform a read on a UNIX system. The specification says the function \texttt{read} takes three parameters: (1) the file name; (2) where to read the data to; and (3) how many bytes to read. Here is an example: 
+Let us examine in some more detail what is actually happening in a 
+system call. This example is from~\cite{mos} and will use C code to 
+perform a read on a UNIX system. The specification says the function 
+\texttt{read} takes three parameters: (1) the file (a file 
+descriptor, from a previous call to \texttt{open}); (2) where to read 
+the data to; and (3) how many bytes to read. Here is an example: 
 
 \begin{verbatim}
-int bytesRead = read( filename, buffer, numBytes );
+int bytesRead = read( file, buffer, numBytes );
 \end{verbatim}
 
 (The \texttt{read} function returns the number of bytes successfully read; it is normally equal to \texttt{numBytes} but might be smaller if the end of the file is reached. Here we are storing it in a variable \texttt{bytesRead}.)
