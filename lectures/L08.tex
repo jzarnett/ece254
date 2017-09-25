@@ -93,7 +93,7 @@ Given that a thread can effectively ignore a cancellation if it is the deferred 
 
 There are two categories of threads in implementation: \textit{user-level} threads (ULTs) and \textit{kernel-level} threads (KLTs -- sometimes also called a lightweight process). ULTs run at the user level and KLTs run at the kernel level.
 
-There are three possible approaches: (1) all threads are user level; (2) all threads are kernel level; and (3) a combination of both approaches. See the diagram below:
+There are three possible approaches: (a) all threads are user level; (b) all threads are kernel level; and (c) a combination of both approaches. See the diagram below:
 
 \begin{center}
 	\includegraphics[width=0.85\textwidth]{images/thread-types.png}\\
@@ -110,7 +110,7 @@ There are three advantages to using user-level threads~\cite{osi}:
 	\item Portability: the program can run in a multithreaded way even if the kernel does not support multiple threads.
 \end{enumerate}
 
-As far as the kernel is concerned, there is only one thread for that process. Thus, if any of the threads in the process block (such as making an I/O request), the whole process will be blocked. But there is a solution to this called \textit{jacketing}: conversion of a blocking system call into a non-blocking system call. Instead of calling the system call directly, the program calls the thread library's version of the system call. The jacket routine checks if the request will result in the application being blocked and can decide instead to consider the requesting thread blocked and switch to another one, preventing the OS from blocking the whole process.
+As far as the kernel is concerned, there is only one thread for that process. Thus, if any of the threads in the process block (such as making an I/O request), the whole process will be blocked. But there is a solution to this called \textit{jacketing}: conversion of a blocking system call into a non-blocking system call. Instead of calling the system call directly, the program calls the thread library's version of the system call. The jacket routine checks if the request will result in the application being blocked and can decide instead to consider the requesting thread blocked and switch to another one, preventing the OS from blocking the whole process. Additionally, a process cannot take advantage of multiple processes.
 
 The kernel level threads approach is taken by Windows, for example. The kernel is responsible for all thread management and it overcomes one of the weaknesses of the ULT approach: if one thread in a process is blocked, the others may continue. Another positive feature is that the kernel routines themselves may be multithreaded~\cite{osi}.
 
