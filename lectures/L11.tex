@@ -172,9 +172,9 @@ It gets worse: if we have multiple processors the disabling interrupts will not 
 The Test-and-Set instruction is a special machine instruction that is performed in a single instruction cycle and is therefore not interruptible. It is therefore an atomic read and write. The idea is that the Test-and-Set instruction returns a boolean value. When run, it will examine the flag variable (in this example, \texttt{i}) and if it is zero, it will set it to 1 and return true. If \texttt{i} is currently set to 1, it will return false. The meaning of the return value is clear: if it is true, it is the current thread's turn to enter the critical section. The Test-and-Set instruction is not actually implemented like this, but a description of its functionality in C is:
 
 \begin{verbatim}
-boolean testAndSet( int i ) {
-  if ( i == 0 ) {
-    i = 1;
+boolean test_and_set( int* i ) {
+  if ( *i == 0 ) {
+    *i = 1;
     return true;
   } else {
     return false;
@@ -182,10 +182,10 @@ boolean testAndSet( int i ) {
 }
 \end{verbatim}
 
-Now, to make use of the \texttt{testAndSet} routine. Let us assume we have an integer variable called \texttt{busy} that is initialized at program startup to 0. The implementation is the same for both threads so there is no need to show them side by side.
+Now, to make use of the \texttt{test\_and\_set} routine. Let us assume we have an integer variable called \texttt{busy} that is initialized at program startup to 0. The implementation is the same for both threads so there is no need to show them side by side.
 
 \begin{verbatim}
-while ( !testAndSet( busy ) ) {
+while ( !test_and_set( busy ) ) {
    /* Wait for my turn */
 }
 /* critical section */
