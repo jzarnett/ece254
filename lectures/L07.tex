@@ -172,7 +172,7 @@ int main(void)
     /* read from the pipe */
     read(fd[READ_END], read_msg, BUFFER_SIZE); 
     printf("read %s",read_msg);
-     /* close the write end of the pipe */
+     /* close the read end of the pipe */
      close(fd[READ_END]);
   }
   return 0;
