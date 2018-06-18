@@ -12,7 +12,7 @@ Each process has a unique identifier in its process control block, and in UNIX w
 
 \begin{center}
 \includegraphics[width=0.5\textwidth]{images/linux-process-tree.png}\\
-A tree of processes in a Linux system~\cite{osc} \footnote{...one of whose authors apparently uses \texttt{emacs} instead of \texttt{vi}. Shame on him.}.
+A tree of processes in a Linux system.
 \end{center}
 
 In a UNIX system, we can obtain a list of processes at any time with the \texttt{ps} command. The diagram illustrates that each user, when logging in, spawns a \texttt{login} process (and an administrator can log people out by killing their \texttt{login} process... not that this is necessarily a good way to do it). The user's shell (these days, almost always \texttt{bash}, the Bourne Again Shell) is then spawned from \texttt{login}. That shell provides the command line interface where the user can enter a command.
