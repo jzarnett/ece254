@@ -11,7 +11,7 @@ Earlier on, we saw that in UNIX, a process may create other processes. The creat
 Each process has a unique identifier in its process control block, and in UNIX we call this the \texttt{pid} (process ID). For the most part, users will not need to know or think about the ID of a process except when trying to terminate one that's gotten stuck (\texttt{kill -9 24601}). The \texttt{init} process always gets a pid of 1. I don't recommend trying to kill \texttt{init}. In most cases, \texttt{init} will just laugh off your attempt (``'tis but a scratch!'') but you might end up rebooting the system or causing a crash.
 
 \begin{center}
-\includegraphics[width=0.5\textwidth]{images/linux-process-tree.png}\\
+\includegraphics[width=0.5\textwidth]{images/linux-process-tree.pdf}\\
 A tree of processes in a Linux system.
 \end{center}
 
