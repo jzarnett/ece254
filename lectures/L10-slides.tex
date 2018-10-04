@@ -450,7 +450,7 @@ void merge_sort( double *array, size_t n ) {
 
 {\scriptsize
 \begin{verbatim}
-void *merge_sort_interal( void *void_arg ) {
+void *merge_sort_internal( void *void_arg ) {
   // the argument is an arbitrary pointer
   //   cast it to a pointer to an instance of 'interval_t'
   interval_t *arg = (interval_t *)void_arg;
@@ -482,8 +482,8 @@ void *merge_sort_interal( void *void_arg ) {
   pthread_t other_thread;
 
   // Create a thread to sort the second half
-  pthread_create( &other_thread, NULL, merge_sort_interal, &arg2 ); 
-  merge_sort_interal( &arg1 );
+  pthread_create( &other_thread, NULL, merge_sort_internal, &arg2 ); 
+  merge_sort_internal( &arg1 );
   
   // Wait for them to finish
   pthread_join( other_thread, NULL );
